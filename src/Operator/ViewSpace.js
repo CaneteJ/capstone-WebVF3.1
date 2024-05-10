@@ -10,7 +10,9 @@ import UserContext from '../UserContext';
 import { useNavigate } from 'react-router-dom';
 import './DashboardOp.css';
 import './space.css';
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons';
+import Card from 'react-bootstrap/Card';
 
 const ParkingSlot = () => {
     const styles = {
@@ -30,9 +32,10 @@ const ParkingSlot = () => {
       const { user } = useContext(UserContext);
   const maxZones = 5;
   const initialSlotSets = [{ title: 'Zone 1', slots: Array(15).fill(false) }];
-  
+  const [parkingPay, setParkingPay] = useState(0);
   const initialTotalSpaces = initialSlotSets.map(zone => zone.slots.length).reduce((total, spaces) => total + spaces, 0);
-
+  const [showButtons, setShowButtons] = useState(false); 
+  const [showConfirmation, setShowConfirmation] = useState(false); 
   const [slotSets, setSlotSets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -61,6 +64,33 @@ const loadSlotsFromLocalStorage = (managementName) => {
 };
 
 useEffect(() => {
+    
+  const fetchEstablishmentData = async () => {
+    try {
+      
+      const q = query(collection(db, 'establishments'), where('managementName', '==', user.managementName));
+      const querySnapshot = await getDocs(q);
+
+      console.log(`Found ${querySnapshot.docs.length} documents`); 
+
+      if (!querySnapshot.empty) {
+        const establishmentData = querySnapshot.docs[0].data(); 
+        console.log('Establishment Data:', establishmentData); 
+        setParkingPay(establishmentData.parkingPay);
+      } else {
+        console.log('No matching establishment found!');
+      }
+    } catch (error) {
+      console.error('Error fetching establishment data:', error);
+    }
+  };
+
+  if (user && user.managementName) {
+    fetchEstablishmentData();
+  }
+}, [user]);
+
+useEffect(() => {
   const managementName = user?.managementName;
   if (managementName) {
     const savedSlots = loadSlotsFromLocalStorage(managementName);
@@ -83,76 +113,50 @@ const fetchData = async (managementName) => {
   setIsLoading(true);
 
   try {
-    // First, attempt to load from local storage to show previous data quickly
-    const savedSlots = loadSlotsFromLocalStorage(user.managementName);
-    if (savedSlots.length > 0) {
-      setSlotSets(savedSlots);
-      console.log('Loaded slots from local storage:', savedSlots);
-    }
-
-    // Prepare to fetch occupied slots information
-    const parkingLogsRef = collection(db, 'logs', managementName, 'floors' );
-    const parkingLogsQuery = query(parkingLogsRef, where('managementName', '==', user.managementName), where('timeOut', '==', null));
-  
-    let occupiedSlots = new Map();
-    const unsubLogs = onSnapshot(parkingLogsQuery, (snapshot) => {
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const slotKey = `${data.floorTitle}-${data.slotId}`;
-        console.log(`Fetched: ${slotKey} with plate: ${data.carPlateNumber}`);  // Check what you fetch
-        occupiedSlots.set(slotKey, data);
-      });
-      console.log("All occupied slots", Array.from(occupiedSlots.entries()));  // To see all fetched data
-  
-
-      // Now fetch establishment data
-      const collectionRef = collection(db, 'establishments');
-      const q = query(collectionRef, where('managementName', '==', user.managementName));
-
-      const unsubEstablishments = onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty) {
-          const establishmentData = snapshot.docs[0].data();
-          let newSlotSets = [];
-
-          if (Array.isArray(establishmentData.floorDetails) && establishmentData.floorDetails.length > 0) {
-            newSlotSets = establishmentData.floorDetails.map(floor => ({
-              title: floor.floorName,
-              slots: Array.from({ length: parseInt(floor.parkingLots) }, (_, i) => {
-                const slotKey = `${floor.floorName}-${i}`; 
-                const slotData = occupiedSlots.get(slotKey);
-                return {
-                  id: i,
-                  occupied: !!slotData,
-                  userDetails: slotData ? { carPlateNumber: slotData.carPlateNumber || 'N/A' } : null
-                };
-              }),
-            }));
-          } else if (establishmentData.totalSlots) {
-            newSlotSets = [{
-              title: 'General Parking',
-              slots: Array.from({ length: parseInt(establishmentData.totalSlots) }, (_, i) => ({
-                id: i,
-                occupied: occupiedSlots.has(i)
-              })),
-            }];
-          }
-
-          console.log('New Slot Sets:', newSlotSets);
-
-          // Update the slot sets with potentially new data
-          setSlotSets(newSlotSets);
-          saveSlotsToLocalStorage(user.managementName, newSlotSets);
-        } else {
-          console.log('No such establishment!');
-        }
-      });
+    const slotDocRef = doc(db, 'slot', managementName);
+    const slotCollectionRef = collection(slotDocRef, 'slotData');
+    const slotsSnapshot = await getDocs(slotCollectionRef);
+    const occupiedSlots = new Map();
+    slotsSnapshot.forEach(doc => {
+      const data = doc.data();
+      occupiedSlots.set(doc.id, data); // Ensure the id is used correctly
     });
+
+    const establishmentRef = collection(db, 'establishments');
+    const q = query(establishmentRef, where('managementName', '==', managementName));
+    const establishmentSnapshot = await getDocs(q);
+    
+    if (!establishmentSnapshot.empty) {
+      const establishmentData = establishmentSnapshot.docs[0].data();
+      let newSlotSets = [];
+
+      if (Array.isArray(establishmentData.floorDetails)) {
+        newSlotSets = establishmentData.floorDetails.map(floor => ({
+          title: floor.floorName,
+          slots: Array.from({ length: parseInt(floor.parkingLots) }, (_, i) => {
+            const slotKey = `slot_${floor.floorName}_${i}`; // Adjusted to match your Firestore keys
+            const slotData = occupiedSlots.get(slotKey);
+            return {
+              id: i,
+              occupied: !!slotData,
+              userDetails: slotData ? slotData.userDetails : null
+            };
+          }),
+        }));
+      }
+
+      setSlotSets(newSlotSets);
+      saveSlotsToLocalStorage(managementName, newSlotSets);
+    } else {
+      console.log('No such establishment found!');
+    }
   } catch (error) {
     console.error('Error fetching data:', error);
   } finally {
     setIsLoading(false);
   }
 };
+
   
   useEffect(() => {
     const managementName = user?.managementName;
@@ -160,6 +164,8 @@ const fetchData = async (managementName) => {
       saveSlotsToLocalStorage(managementName, slotSets);
     }
   }, [slotSets, user?.managementName]); 
+
+  
   
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
   const [zoneAvailableSpaces, setZoneAvailableSpaces] = useState(
@@ -173,6 +179,7 @@ const fetchData = async (managementName) => {
       fetchSlots(managementName);
     }
   }, [user?.managementName]);
+
 
   const fetchSlots = async (managementName) => {
     const collectionRef = collection(db, 'establishments');
@@ -226,8 +233,11 @@ const fetchData = async (managementName) => {
         setUserPlateNumber(searchInput);
         setUserFound(false); 
       }
+      setShowButtons(true); // Show Assign and Exit buttons regardless of search outcome
+      setShowConfirmation(false); // 
     } catch (error) {
       console.error('Error:', error);
+      setShowButtons(false);
     }
   };
   const navigate = useNavigate();
@@ -437,7 +447,15 @@ const renderFloorTabs = () => {
         <Tab.Content>
           {slotSets.map((slotSet, index) => (
             <Tab.Pane eventKey={index} key={index}>
-              <h2 style={{textAlign:'center', marginTop:'10vh', textTransform:'uppercase', fontWeight:'bold', fontSize:'36px', color:'#132B4B'}}>{slotSet.title} Floor </h2>
+              <h2 style={{textAlign:'center', textTransform:'uppercase', fontWeight:'bold', fontSize:'36px', color:'#132B4B'}}>{slotSet.title} Floor </h2>
+               <div className="flex-row" style={{display:'flex', justifyContent:'flex-end'}}>
+                <Card style={{backgroundColor:'#e0fff6', boxShadow:'0 2px 4px #06bee1'}}>
+                  <Card.Body>
+                    <Card.Title style={{fontFamily:'Courier New', textAlign:'center'}}><FontAwesomeIcon icon={faFileInvoiceDollar} color="#011642"/> Parking Fee </Card.Title>
+                    <Card.Text style={{ textAlign: 'center', fontFamily:'Copperplate', fontSize:'18px' }}>{parkingPay}.00</Card.Text>
+                  </Card.Body>
+                </Card>
+              </div>  
               <div className='parkingContainer'>
                 <div className='parkingGrid'>
                   {slotSet.slots.map((slot, slotIndex) => {
@@ -457,8 +475,8 @@ const renderFloorTabs = () => {
                           margin: '5px',
                           borderRadius: '15px',
                           boxShadow: slot.occupied ? 
-                          '0 4px 6px #DC143C' : 
-                          '0 6px 8px #00ff00', 
+                          '0 2px 4px #DC143C' : 
+                          '0 2px 4px #00ff00', 
                        }}
                         onClick={() => handleSlotClick(slotIndex)}
                       >
@@ -499,8 +517,9 @@ const renderFloorTabs = () => {
     // Assuming managementName is available in your component
     const managementDocRef = doc(db, 'slot', managementName);
     const slotCollectionRef = collection(managementDocRef, 'slotData');
-    const slotDocRef = doc(slotCollectionRef, `slot_${slotIndex}`);
-  
+    const floorTitle = slotSets[currentSetIndex].title || "General Parking";
+    const slotDocRef = doc(slotCollectionRef, `slot_${floorTitle}_${slotIndex}`);
+
     try {
       // Delete the slot document from Firestore
       await deleteDoc(slotDocRef);
@@ -512,14 +531,24 @@ const renderFloorTabs = () => {
     }
   
     // Update local state to reflect the slot is now empty
-    const updatedSets = [...slotSets];
-    updatedSets[currentSetIndex].slots[slotIndex] = {
-      text: slotIndex + 1, 
-      occupied: false,
-      timestamp: null,
-      userDetails: null,
-    };
-    setSlotSets(updatedSets);
+    const updatedSets = slotSets.map((set, idx) => {
+      if (idx === currentSetIndex) {
+        return {
+          ...set,
+          slots: set.slots.map((slot, i) => {
+            if (i === slotIndex) {
+              return {
+                ...slot,
+                occupied: false,
+                userDetails: null
+              };
+            }
+            return slot;
+          })
+        };
+      }
+      return set;
+    });
   
     // Update the count of available spaces
     setZoneAvailableSpaces((prevSpaces) => {
@@ -553,16 +582,26 @@ const renderFloorTabs = () => {
   
     // Clear any error message and close the confirmation dialog if it's open
     setErrorMessage('');
-    setShowExitConfirmation(false);
+    setShowExitConfirmation(true);
   };
   
   
   const handleConfirmExit = () => {
     setShowExitConfirmation(false);
   };
+  
+
   const handleCancelExit = () => {
     setShowExitConfirmation(false); 
   };
+  const handleCloseModal = () => {
+    setShowModal(false);        // Hide the modal
+    setShowButtons(false);      // Hide the buttons
+    setShowConfirmation(false); // Hide the confirmation message
+    setErrorMessage('');        // Clear any error messages
+    setUserDetails({});         // Reset user details if necessary
+};
+
   
 
   return (
@@ -588,53 +627,104 @@ const renderFloorTabs = () => {
           {slotSets.length > 0 ? renderFloorTabs() : <p>Loading floors...</p>}
         </div>
       
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Parking Slot {selectedSlot + 1}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
-
-          {selectedSlot !== null && (
+        <Modal show={showModal} onHide={handleCloseModal}>
+    <Modal.Header closeButton >
+        <Modal.Title >Parking Slot {selectedSlot + 1}</Modal.Title>
+    </Modal.Header>
+    <Modal.Body style={{backgroundColor: '#fff8c9' }}>
+        {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
+        {selectedSlot !== null && (
             <SearchForm
-              onSearch={searchInFirebase}
-              onSelectSlot={(carPlateNumber) => handleAddToSlot(carPlateNumber, selectedSlot)}
-              onExitSlot={() => handleExitSlot(selectedSlot)}
-              selectedSlot={selectedSlot}
-              userDetails={userDetails}
+                onSearch={searchInFirebase}
+                onSelectSlot={(carPlateNumber) => handleAddToSlot(carPlateNumber, selectedSlot)}
+                onExitSlot={() => handleExitSlot(selectedSlot)}
+                selectedSlot={selectedSlot}
+                userDetails={userDetails}
             />
-          )}
-          {selectedSlot !== null && userDetails !== null && (
-            <div style={{ marginTop: '10px' }}>
-              <h4>User Details:</h4>
-              <p>Email: {userDetails.email}</p>
-              <p>Contact Number: {userDetails.contactNumber}</p>
-              <p>Car Plate Number: {userDetails.carPlateNumber}</p>
-              <p>Gender: {userDetails.gender}</p>
-              <p>Age: {userDetails.age}</p>
-              <p>Address: {userDetails.address}</p>
+        )}
+         <hr className="divider" />
+        {selectedSlot !== null && userDetails && (
+            <div className="user-details">
+                <h4 style={{fontFamily:'Copperplate', fontWeight:'bold'}}>User Details:</h4>
+              <div class="details-row">
+                  <span class="label">Email:</span>
+                  <span class="value">{userDetails.email}</span>
+              </div>
+              <div class="details-row">
+                  <span class="label">Contact Number:</span>
+                  <span class="value">{userDetails.contactNumber}</span>
+              </div>
+              <div class="details-row">
+                  <span class="label">Car Plate Number:</span>
+                  <span class="value">{userDetails.carPlateNumber}</span>
+              </div>
+              <div class="details-row">
+                  <span class="label">Gender:</span>
+                  <span class="value">{userDetails.gender}</span>
+              </div>
+              <div class="details-row">
+                  <span class="label">Age:</span>
+                  <span class="value">{userDetails.age}</span>
+              </div>
+              <div class="details-row">
+                  <span class="label">Address:</span>
+                  <span class="value">{userDetails.address}</span>
+              </div>
               {slotSets[currentSetIndex].slots[selectedSlot].timestamp && (
-                <p>Timestamp: {slotSets[currentSetIndex].slots[selectedSlot].timestamp.toString()}</p>
+                  <div class="details-row">
+                      <span class="label">Timestamp:</span>
+                      <span class="value">{slotSets[currentSetIndex].slots[selectedSlot].timestamp.toString()}</span>
+                  </div>
               )}
-            </div>
+          </div>
           )}
-        </Modal.Body>
-        <Modal.Footer>
-          {recordFound ? null : <div style={{ color: 'red' }}>No record found for this car plate number.</div>}
-        </Modal.Footer>
-      </Modal>
+            {showButtons && (
+            <div>
+                <button className='btn-custom-assign' onClick={() => {
+                    if (!userFound) {
+                        setShowConfirmation(true); 
+                    } else {
+                        handleAddToSlot(userPlateNumber, selectedSlot);
+                    }
+                }}>
+                    Assign
+                </button>
+                <button className= 'btn-custom-exit'  onClick={() => handleExitSlot(selectedSlot)}>
+                    Exit
+                </button>
+            </div>
+        )}
+        {showConfirmation && (
+            <div>
+                <p style={{marginTop: '10px', fontFamily:'Copperplate'}}>No record found. Do you want to proceed?</p>
+                <button className='btn-custom-no' onClick={() => setShowConfirmation(false)}>
+                    No
+                </button>
+                <button className='btn-custom-yes' onClick={() => {
+                    handleAddToSlot(userPlateNumber, selectedSlot);
+                    setShowConfirmation(false);
+                }}>
+                    Yes
+                </button>
+            </div>
+        )}
+    </Modal.Body>
+    <Modal.Footer>
+        {recordFound ? null : <div style={{ color: 'red' }}>No record found for this car plate number.</div>}
+    </Modal.Footer>
+  </Modal>
       <Modal show={showExitConfirmation} onHide={handleCancelExit}>
         <Modal.Header closeButton>
           <Modal.Title>Confirmation</Modal.Title>
         </Modal.Header>
         <Modal.Body>Are you sure you want to vacant this slot?</Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCancelExit}>
+          <button className='btn-custom-no' onClick={handleCancelExit}>
             No
-          </Button>
-          <Button variant="primary" onClick={handleConfirmExit}>
+          </button>
+          <button className='btn-custom-yes' onClick={handleConfirmExit}>
             Yes
-          </Button>
+          </button>
         </Modal.Footer>
       </Modal>
     </div>

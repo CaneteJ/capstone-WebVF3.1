@@ -10,7 +10,9 @@ import UserContext from '../UserContext';
 import { useNavigate } from 'react-router-dom';
 import './DashboardOp.css';
 import './space.css';
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons';
+import Card from 'react-bootstrap/Card';
 
 const ParkingSlot = () => {
     const styles = {
@@ -30,7 +32,7 @@ const ParkingSlot = () => {
       const { user } = useContext(UserContext);
   const maxZones = 5;
   const initialSlotSets = [{ title: 'Zone 1', slots: Array(15).fill(false) }];
-  
+  const [parkingPay, setParkingPay] = useState(0);
   const initialTotalSpaces = initialSlotSets.map(zone => zone.slots.length).reduce((total, spaces) => total + spaces, 0);
 
   const [slotSets, setSlotSets] = useState([]);
@@ -59,6 +61,33 @@ const loadSlotsFromLocalStorage = (managementName) => {
     return [];
   }
 };
+
+useEffect(() => {
+    
+  const fetchEstablishmentData = async () => {
+    try {
+      
+      const q = query(collection(db, 'establishments'), where('managementName', '==', user.managementName));
+      const querySnapshot = await getDocs(q);
+
+      console.log(`Found ${querySnapshot.docs.length} documents`); 
+
+      if (!querySnapshot.empty) {
+        const establishmentData = querySnapshot.docs[0].data(); 
+        console.log('Establishment Data:', establishmentData); 
+        setParkingPay(establishmentData.parkingPay);
+      } else {
+        console.log('No matching establishment found!');
+      }
+    } catch (error) {
+      console.error('Error fetching establishment data:', error);
+    }
+  };
+
+  if (user && user.managementName) {
+    fetchEstablishmentData();
+  }
+}, [user]);
 
 useEffect(() => {
   const managementName = user?.managementName;
@@ -108,7 +137,7 @@ const fetchData = async (managementName) => {
       // Now fetch establishment data
       const collectionRef = collection(db, 'establishments');
       const q = query(collectionRef, where('managementName', '==', user.managementName));
-
+      
       const unsubEstablishments = onSnapshot(q, (snapshot) => {
         if (!snapshot.empty) {
           const establishmentData = snapshot.docs[0].data();
@@ -160,6 +189,8 @@ const fetchData = async (managementName) => {
       saveSlotsToLocalStorage(managementName, slotSets);
     }
   }, [slotSets, user?.managementName]); 
+
+  
   
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
   const [zoneAvailableSpaces, setZoneAvailableSpaces] = useState(
@@ -173,6 +204,7 @@ const fetchData = async (managementName) => {
       fetchSlots(managementName);
     }
   }, [user?.managementName]);
+
 
   const fetchSlots = async (managementName) => {
     const collectionRef = collection(db, 'establishments');
@@ -426,7 +458,7 @@ const renderFloorTabs = () => {
           {slotSets.map((slotSet, index) => (
             <Nav.Item key={index} style={{ width: '150px', textAlign: 'center' }}>
               <Nav.Link eventKey={index} style={{ borderRadius: '0.25rem', 
-                 backgroundColor: currentSetIndex === index.toString() ? '#132B4B' : 'transparent', 
+                 backgroundColor: currentSetIndex === index.toString() ? '#00171f' : 'transparent', 
                  color: currentSetIndex === index.toString() ? 'white' : 'black',
                  fontWeight: currentSetIndex === index.toString() ? 'bold' : 'normal',
                  border: currentSetIndex === index.toString() ? '1px solid #28a745' : 'none',
@@ -437,7 +469,15 @@ const renderFloorTabs = () => {
         <Tab.Content>
           {slotSets.map((slotSet, index) => (
             <Tab.Pane eventKey={index} key={index}>
-              <div style={{textAlign:'center', marginTop:'10vh', fontFamily:'Copperplate', fontSize:'30px', textShadow:'0 2px 6px black'}}>{slotSet.title} Floor </div>
+               <div className="flex-row" style={{display:'flex', justifyContent:'flex-end'}}>
+                <Card style={{backgroundColor:'#e0fff6', boxShadow:'0 2px 4px #06bee1'}}>
+                  <Card.Body>
+                    <Card.Title style={{fontFamily:'Courier New', textAlign:'center'}}><FontAwesomeIcon icon={faFileInvoiceDollar} color="#011642"/> Parking Fee </Card.Title>
+                    <Card.Text style={{ textAlign: 'center', fontFamily:'Copperplate', fontSize:'18px' }}>{parkingPay}</Card.Text>
+                  </Card.Body>
+                </Card>
+              </div>  
+              <h2 style={{textAlign:'center', marginTop:'10vh', textTransform:'uppercase', fontWeight:'bold', fontSize:'36px', color:'#132B4B'}}>{slotSet.title} Floor </h2>
               <div className='parkingContainer'>
                 <div className='parkingGrid'>
                   {slotSet.slots.map((slot, slotIndex) => {
@@ -457,8 +497,8 @@ const renderFloorTabs = () => {
                           margin: '5px',
                           borderRadius: '15px',
                           boxShadow: slot.occupied ? 
-                          '0 4px 6px #DC143C' : 
-                          '0 6px 8px #00ff00', 
+                          '0 2px 4px #DC143C' : 
+                          '0 2px 4px #00ff00', 
                        }}
                         onClick={() => handleSlotClick(slotIndex)}
                       >
@@ -569,7 +609,7 @@ const renderFloorTabs = () => {
     <div className="d-flex" style={{ minHeight: '100vh' }}>
       <div className="sidebar" style={{ width: '250px', backgroundColor: '#003851' }}>
         <div className="sidebar-header" style={{ padding: '20px', color: 'white', textAlign: 'center', fontSize: '24px' }}>
-          <FaUserCircle size={28} style={{ marginRight: '10px' }} /> Welcome  {user?.firstName || 'No name found'}
+          <FaUserCircle size={28} style={{ marginRight: '10px' }} /> Welcome,  {user?.firstName || 'No name found'}
         </div>
         <div class="wrapper">
           <div class="side">
@@ -605,18 +645,40 @@ const renderFloorTabs = () => {
             />
           )}
           {selectedSlot !== null && userDetails !== null && (
-            <div style={{ marginTop: '10px' }}>
-              <h4>User Details:</h4>
-              <p>Email: {userDetails.email}</p>
-              <p>Contact Number: {userDetails.contactNumber}</p>
-              <p>Car Plate Number: {userDetails.carPlateNumber}</p>
-              <p>Gender: {userDetails.gender}</p>
-              <p>Age: {userDetails.age}</p>
-              <p>Address: {userDetails.address}</p>
+              <div class="user-details">
+              <h4 style={{fontFamily:'Copperplate', fontWeight:'bold'}}>User Details:</h4>
+              <div class="details-row">
+                  <span class="label">Email:</span>
+                  <span class="value">{userDetails.email}</span>
+              </div>
+              <div class="details-row">
+                  <span class="label">Contact Number:</span>
+                  <span class="value">{userDetails.contactNumber}</span>
+              </div>
+              <div class="details-row">
+                  <span class="label">Car Plate Number:</span>
+                  <span class="value">{userDetails.carPlateNumber}</span>
+              </div>
+              <div class="details-row">
+                  <span class="label">Gender:</span>
+                  <span class="value">{userDetails.gender}</span>
+              </div>
+              <div class="details-row">
+                  <span class="label">Age:</span>
+                  <span class="value">{userDetails.age}</span>
+              </div>
+              <div class="details-row">
+                  <span class="label">Address:</span>
+                  <span class="value">{userDetails.address}</span>
+              </div>
               {slotSets[currentSetIndex].slots[selectedSlot].timestamp && (
-                <p>Timestamp: {slotSets[currentSetIndex].slots[selectedSlot].timestamp.toString()}</p>
+                  <div class="details-row">
+                      <span class="label">Timestamp:</span>
+                      <span class="value">{slotSets[currentSetIndex].slots[selectedSlot].timestamp.toString()}</span>
+                  </div>
               )}
-            </div>
+          </div>
+          
           )}
         </Modal.Body>
         <Modal.Footer>

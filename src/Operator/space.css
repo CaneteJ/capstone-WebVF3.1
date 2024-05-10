@@ -35,3 +35,113 @@
   font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
   font-size: 22px;
 }
+
+.btn-custom-search {
+  background-color: #00b4d8;
+  color: #fff;
+  border: none;
+  font-weight: bold;
+  font-family:'Copperplate';
+  box-shadow: 0 2px 4px #03405e ;
+}
+
+.btn-custom-search:hover {
+  background-color: #0056b3;
+}
+
+.btn-custom-assign {
+  background-color: #0b6a3c;
+  color: #fff;
+  border: none;
+  font-weight: bold;
+  font-family: 'Copperplate';
+  box-shadow: 0 2px 4px #0b6a3c;
+  margin-top: 2vh;
+  margin-right: 2vh;
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.btn-custom-assign:hover {
+  background-color: #239b5d;
+}
+
+.btn-custom-exit {
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  font-weight: bold;
+  font-family: 'Copperplate';
+  box-shadow: 0 2px 4px #ea3b52;
+  margin-top: 2vh;
+  margin-right: 2vh;
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.btn-custom-exit:hover {
+  background-color: #f08080;
+}
+
+.btn-custom-no {
+  background-color: #6c757d;
+  color: #fff;
+  border: none;
+  font-weight: bold;
+  margin-right: 10px;
+  border-radius: 5px;
+}
+
+.btn-custom-no:hover {
+  background-color: #5a6268;
+}
+
+.btn-custom-yes {
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  font-weight: bold;
+  border-radius: 5px;
+}
+
+.btn-custom-yes:hover {
+  background-color: #5cb85c;
+}
+.search-bar {
+  background-color: white;
+  background-image: url('/public/search.png');
+  background-position: 3px ;
+  background-repeat: no-repeat;
+  padding-left: 40px;
+}
+.user-details {
+  background-color: #e0fff6; /* Light grey background */
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 5px #06bee1;
+  margin-top: 10px;
+}
+
+.details-row {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.label {
+  flex: 1; /* Take up one part of the flex container */
+  padding: 10px;
+  background-color: white;
+  border: 1px solid #ccc; /* Light grey border */
+  border-radius: 5px 0 0 5px; /* Rounded corners on the left side */
+  font-weight: bold;
+  font-family: 'Copperplate'
+}
+
+.value {
+  flex: 2; /* Take up two parts of the flex container, making it wider than the label */
+  padding: 10px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-left: none; /* Remove left border to merge visually with label */
+  border-radius: 0 5px 5px 0; /* Rounded corners on the right side */
+}
