@@ -384,56 +384,16 @@ function DashboardOp() {
             const querySnapshot = await getDocs(collection(db, "user"));
             setParkingSeeker(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         };
-        fetchParkingUsers();
-        const fetchAgents = async () => {
-            const querySnapshot = await getDocs(collection(db, "agents"));
-            setAgent(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        };
-        fetchAgents();
-        const fetchEstablishments = async () => {
-            const querySnapshot = await getDocs(collection(db, "establishments"));
-            setEstablishments(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        };
-        fetchEstablishments();
-        const fetchPendingAccounts = async () => {
-            const querySnapshot = await getDocs(query(collection(db, "pendingEstablishments")));
-            setPendingAccounts(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        };
-        fetchPendingAccounts();
     }, []);
     useEffect(() => {
         setSummaryCardsData([
-            { 
-                title: 'Total Parking Spaces', 
-                value: `3 Total Parking Spaces`, // Use totalParkingSpaces from state
-                imgSrc: 'totalPark.png', 
-                cardType: 'total' 
-            },
-            { 
-                title: 'Occupied Spaces', 
-                value: `1 Occupied Spaces`, // Update this dynamically if you have the data
-                imgSrc: 'occupied.png', 
-                cardType: 'occupied' 
-            },
-            { 
-                title: 'Available Spaces', 
-                value: `2 Available Spaces`, // Assuming 1 space occupied, update dynamically
-                imgSrc: 'available.png', 
-                cardType: 'available' 
-            },
-            { 
-                title: 'Reserve Spaces', 
-                value: `0 Reserve Spaces`, // Update this dynamically if you have the data
-                imgSrc: 'reservedP.png', 
-                cardType: 'reserve' 
-            },
             { 
                 title: 'Enter Vehicle', 
                 imgSrc: 'addV.png', 
                 cardType: 'agents' 
             }
         ]);
-    }, [totalParkingSpaces, pendingAccounts, establishments, parkingSeeker, agent]);  // Add any other dependencies if needed
+    }, [agent]);  // Add any other dependencies if needed
     
 
     const handleCardClick = (cardType) => {
@@ -445,152 +405,6 @@ function DashboardOp() {
         let data = [];
         let headers = [];
         switch (activeCard) {
-            case 'occupied':
-                data = pendingAccounts || []; // Ensure data is an array
-                headers = ["Email", "Contact Number", "Plate Number", "Slot Number"];
-                return (
-                    <table className="table align-middle mb-0 bg-white">
-                    <thead className="bg-light">
-                        <tr>
-                        <th>Name</th>
-                        <th>Contact Number</th>
-                        <th>Plate Number</th>
-                        <th>Floor</th>
-                        <th>Slot Number</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                        <td>
-                            <div className="d-flex align-items-center">
-                            <img
-                                src="https://mdbootstrap.com/img/new/avatars/8.jpg"
-                                alt=""
-                                style={{ width: '45px', height: '45px' }}
-                                className="rounded-circle"
-                                />
-                            <div className="ms-3">
-                                <p className="fw-bold mb-1">gg</p>
-                                <p className="text-muted mb-0">gg@gmail.com</p>
-                            </div>
-                            </div>
-                        </td>
-                        <td>
-                            <p className="text-muted mb-0">09123456789</p>
-                        </td>
-                        <td>Abc23</td>
-                        <td>
-                            <p className="fw-normal mb-1">First</p>
-                        </td>
-                        <td>1</td>
-                        <td>
-                            <span className="badge badge-success rounded-pill d-inline">Active</span>
-                        </td>
-                        <td>
-                            <button type="button" className="btn btn-link btn-sm btn-rounded">
-                            Edit
-                            </button>
-                        </td>
-                        </tr>
-                    </tbody>
-                    </table>
-                );
-                break;
-            case 'available':
-                data = establishments || []; // Ensure data is an array
-                headers = ["Location", "Slot Number"];
-                return (
-                    <table className="table align-middle mb-0 bg-white">
-                    <thead className="bg-light">
-                        <tr> 
-                        <th>Floor</th>
-                        <th>Slot Number</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                        <td>
-                            <p className="fw-normal mb-1">Second</p>
-                        </td>
-                        <td>1</td>
-                        <td>
-                            <span className="badge badge-success rounded-pill d-inline">Active</span>
-                        </td>
-                        <td>
-                            <button type="button" className="btn btn-link btn-sm btn-rounded">
-                            Edit
-                            </button>
-                        </td>
-                        </tr>
-                        <tr>
-                        <td>
-                            <p className="fw-normal mb-1">Second</p>
-                        </td>
-                        <td>2</td>
-                        <td>
-                            <span className="badge badge-success rounded-pill d-inline">Active</span>
-                        </td>
-                        <td>
-                            <button type="button" className="btn btn-link btn-sm btn-rounded">
-                            Edit
-                            </button>
-                        </td>
-                        </tr>
-                    </tbody>
-                    </table>
-                );
-                break;
-            case 'reserve':
-                data = parkingSeeker || []; // Ensure data is an array
-                headers = ["Email", "Plate Number", "Location", "Slot Number", "Date"];
-                return (
-                    <table className="table align-middle mb-0 bg-white">
-                    <thead className="bg-light">
-                        <tr> 
-                        <th>Email</th>
-                        <th>Plate Number</th>
-                        <th>Location</th>
-                        <th>Slot Number</th>
-                        <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                        <td>
-                            <p className="fw-normal mb-1"></p>
-                        </td>
-                        <td></td>
-                        <td>
-                            <span className="badge badge-success rounded-pill d-inline">Active</span>
-                        </td>
-                        <td>
-                        </td>
-                        <td></td>
-                        <button type="button" className="btn btn-link btn-sm btn-rounded">
-                            Edit
-                            </button>
-                        </tr>
-                        <tr>
-                        <td>
-                            <p className="fw-normal mb-1"></p>
-                        </td>
-                        <td></td>
-                        <td>
-                            <span className="badge badge-success rounded-pill d-inline">Active</span>
-                        </td>
-                        <td>
-                        </td>
-                        <td></td>
-                        <td>
-                        <button type="button" className="btn btn-link btn-sm btn-rounded">
-                            Edit
-                            </button>
-                        </td>
-                        </tr>
-                    </tbody>
-                    </table>
-                );
-                break;
             case 'agents':
                 return <AddVehicleForm onSearch={searchInFirebase} floorOptions={floorOptions || []} handleAddToSlot={handleAddToSlot} />;
             default:
@@ -703,7 +517,6 @@ function DashboardOp() {
               const handleDecline = async (accountId) => {
               }
               
-               
               return (
                 <div>
                 <div className="admin-dashboard">
@@ -743,17 +556,18 @@ function DashboardOp() {
                                 </div>
                             ))}
                         </div>
+                        <div className="container">
                         <h1>Please select floors</h1>
-                        <select value={selectedFloor} onChange={handleFloorChange}>
-                            <option value="">Select Floor</option>
-                            {floorOptions.map((floor, index) => (
-                                <option key={index} value={floor.floorName}>{floor.floorName}</option>
-                            ))}
-                        </select>
-                        <hr className="divider" />
+                    <select value={selectedFloor} onChange={handleFloorChange} className="floor-select">
+                        <option value="">Select Floor</option>
+                        {floorOptions.map((floor, index) => (
+                            <option key={index} value={floor.floorName}>{floor.floorName}</option>
+                        ))}
+                    </select>
+                    <hr className="divider" />
                         {renderSelectedFloorSlots()}
                         {renderFormBasedOnCardType()}
-                        
+                    </div>
               </div>
             </div>       
             </div>
@@ -761,3 +575,5 @@ function DashboardOp() {
         }
         
         export default DashboardOp;
+
+    

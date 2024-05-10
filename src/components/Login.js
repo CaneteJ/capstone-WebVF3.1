@@ -57,7 +57,7 @@ function Login() {
   
         if (!agentsSnapshot.empty) {
           userData = agentsSnapshot.docs[0].data();
-          path = '/DashboardOp';  
+          path = '/ViewSpace';  
         } else if (!establishmentsSnapshot.empty) {
           userData = establishmentsSnapshot.docs[0].data();
           path = '/Dashboard'; 

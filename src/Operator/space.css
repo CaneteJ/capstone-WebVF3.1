@@ -1,25 +1,37 @@
 .parkingGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* adjust minmax to desired slot width */
-    gap: 10px; /* adjust the gap between slots */
-    padding: 25px; /* adjust the padding inside the grid */
-    border: 5px solid black; /* border for the grid */
-    max-width: 100%; /* maximum width of the grid */
-    margin: 0 auto; /* center the grid horizontally */
-  }
-  
-  .parkingSlot {
-    width: 100%; /* width relative to column width */
-    aspect-ratio: 1; /* make slots square */
-    background-color: green; /* default slot color */
-    color: white; /* text color */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-  }
-  
-  .parkingSlot.occupied {
-    background-color: red; /* occupied slot color */
-  }
-  
+  display: grid;
+  grid-template-columns: repeat(10, 1fr); /* 10 slots per row */
+  gap: 10px; /* Fixed gap between slots */
+  padding: 25px;
+  border: 5px rgba(110, 108, 108, 0.873);
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.parkingSlot {
+  width: 100%; /* width relative to column width */
+  aspect-ratio:  1; /* make slots square */
+  background-color: green; /* default slot color */
+  color: white; /* text color */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.parkingSlot.occupied {
+  background-color: red; /* occupied slot color */
+}
+.parkingContainer {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto;    
+  width: fit-content ;
+  margin-top: 10vh;
+}
+.header {
+ 
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  font-size: 22px;
+}

@@ -152,7 +152,7 @@ const OperatorReserve = () => {
     <div class="side">
         <h2>Menu</h2>
         <ul>
-            <li><a href="DashboardOp"><i class="fas fa-home"></i>Home</a></li>
+            <li><a href="ViewSpace"><i class="fas fa-home"></i>Home</a></li>
             <li><a href='Reservation'><i class="fas fa-user"></i>Manage Reservation</a></li>
             <li><a href='OperatorDashboard'><i class="fas fa-address-card"></i>Records</a></li>
             <li><a href="OperatorProfile"><i class="fas fa-blog"></i>Profile</a></li>

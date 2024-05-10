@@ -23,6 +23,7 @@
     "react-dom": "^18.2.0",
     "react-geolocated": "^4.1.2",
     "react-icons": "^4.10.1",
+    "react-native-picker-select": "^9.1.3",
     "react-places-autocomplete": "^7.3.0",
     "react-router-dom": "^6.14.2",
     "react-scripts": "^5.0.1",

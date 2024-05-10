@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useMemo} from 'react';
-import { Button, Modal, Form} from 'react-bootstrap';
+import { Button, Modal, Form, Tab, Nav} from 'react-bootstrap';
 import { Dropdown, DropdownButton } from 'react-bootstrap';
 import { Link, } from 'react-router-dom';
 import { FaUserCircle } from "react-icons/fa";
@@ -8,6 +8,7 @@ import { collection, getDocs, query, where, serverTimestamp,addDoc, setDoc, doc,
 import SearchForm from './SearchForm';
 import UserContext from '../UserContext';
 import { useNavigate } from 'react-router-dom';
+import './DashboardOp.css';
 import './space.css';
 
 
@@ -64,13 +65,12 @@ useEffect(() => {
   if (managementName) {
     const savedSlots = loadSlotsFromLocalStorage(managementName);
     if (savedSlots.length > 0) {
-      setSlotSets(savedSlots);
       console.log('Loaded slots from local storage:', savedSlots);
-    } else {
-      fetchData(managementName); 
+      setSlotSets(savedSlots);
     }
+    fetchData(managementName); // Always fetch to ensure you have the latest data.
   }
-}, []); 
+}, [user?.managementName]);
 
 const savedSlots = useMemo(() => loadSlotsFromLocalStorage(), []);
 
@@ -80,67 +80,72 @@ const fetchData = async (managementName) => {
     return;
   }
 
-  let occupiedSlots = new Map(); 
+  setIsLoading(true);
 
   try {
-    const parkingLogsRef = collection(db, 'logs');
+    // First, attempt to load from local storage to show previous data quickly
+    const savedSlots = loadSlotsFromLocalStorage(user.managementName);
+    if (savedSlots.length > 0) {
+      setSlotSets(savedSlots);
+      console.log('Loaded slots from local storage:', savedSlots);
+    }
+
+    // Prepare to fetch occupied slots information
+    const parkingLogsRef = collection(db, 'logs', managementName, 'floors' );
     const parkingLogsQuery = query(parkingLogsRef, where('managementName', '==', user.managementName), where('timeOut', '==', null));
   
+    let occupiedSlots = new Map();
     const unsubLogs = onSnapshot(parkingLogsQuery, (snapshot) => {
-      const newLogs = snapshot.docs.map(doc => doc.data());
-
-      occupiedSlots = new Map();
       snapshot.forEach(doc => {
         const data = doc.data();
-        occupiedSlots.set(data.slotId, doc.id); 
+        const slotKey = `${data.floorTitle}-${data.slotId}`;
+        console.log(`Fetched: ${slotKey} with plate: ${data.carPlateNumber}`);  // Check what you fetch
+        occupiedSlots.set(slotKey, data);
       });
-      console.log(snapshot.docs.map(doc => doc.data()));
-    });
+      console.log("All occupied slots", Array.from(occupiedSlots.entries()));  // To see all fetched data
+  
 
-    const collectionRef = collection(db, 'establishments');
-    const q = query(collectionRef, where('managementName', '==', user.managementName));
-  
-    const unsubEstablishments = onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) {
-        const newEstablishmentData = snapshot.docs.map(doc => doc.data());
-        const establishmentData = snapshot.docs[0].data();
-  
-        let newSlotSets = [];
-  
-        if (Array.isArray(establishmentData.floorDetails) && establishmentData.floorDetails.length > 0) {
-          newSlotSets = establishmentData.floorDetails.map(floor => ({
-            title: floor.floorName,
-            slots: Array.from({ length: parseInt(floor.parkingLots) }, (_, i) => ({ id: i })),
-          }));
-        } else if (establishmentData.totalSlots) {
-          newSlotSets = [{
-            title: 'General Parking',
-            slots: Array.from({ length: parseInt(establishmentData.totalSlots) }, (_, i) => ({ id: i })),
-          }];
+      // Now fetch establishment data
+      const collectionRef = collection(db, 'establishments');
+      const q = query(collectionRef, where('managementName', '==', user.managementName));
+
+      const unsubEstablishments = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+          const establishmentData = snapshot.docs[0].data();
+          let newSlotSets = [];
+
+          if (Array.isArray(establishmentData.floorDetails) && establishmentData.floorDetails.length > 0) {
+            newSlotSets = establishmentData.floorDetails.map(floor => ({
+              title: floor.floorName,
+              slots: Array.from({ length: parseInt(floor.parkingLots) }, (_, i) => {
+                const slotKey = `${floor.floorName}-${i}`; 
+                const slotData = occupiedSlots.get(slotKey);
+                return {
+                  id: i,
+                  occupied: !!slotData,
+                  userDetails: slotData ? { carPlateNumber: slotData.carPlateNumber || 'N/A' } : null
+                };
+              }),
+            }));
+          } else if (establishmentData.totalSlots) {
+            newSlotSets = [{
+              title: 'General Parking',
+              slots: Array.from({ length: parseInt(establishmentData.totalSlots) }, (_, i) => ({
+                id: i,
+                occupied: occupiedSlots.has(i)
+              })),
+            }];
+          }
+
+          console.log('New Slot Sets:', newSlotSets);
+
+          // Update the slot sets with potentially new data
+          setSlotSets(newSlotSets);
+          saveSlotsToLocalStorage(user.managementName, newSlotSets);
+        } else {
+          console.log('No such establishment!');
         }
-        console.log('New Slot Sets:', newSlotSets);
-  
-        newSlotSets.forEach((slotSet) => {
-          slotSet.slots.forEach((slot) => {
-            if (occupiedSlots.has(slot.id)) {
-              slot.occupied = true;
-              slot.logDocId = occupiedSlots.get(slot.id);
-            } else {
-              slot.occupied = false;
-            }
-          });
-        });
-  
-        setSlotSets(newSlotSets);
-        saveSlotsToLocalStorage(newSlotSets);
-  
-        if (savedSlots.length > 0) {
-          setSlotSets(savedSlots);
-          console.log('Loaded slots from local storage:', savedSlots);
-        }
-      } else {
-        console.log('No such establishment!');
-      }
+      });
     });
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -160,6 +165,45 @@ const fetchData = async (managementName) => {
   const [zoneAvailableSpaces, setZoneAvailableSpaces] = useState(
     initialSlotSets.map(zone => zone.slots.length)
   );
+  const [currentTab, setCurrentTab] = useState(0); 
+  
+  useEffect(() => {
+    const managementName = user?.managementName;
+    if (managementName) {
+      fetchSlots(managementName);
+    }
+  }, [user?.managementName]);
+
+  const fetchSlots = async (managementName) => {
+    const collectionRef = collection(db, 'establishments');
+    const q = query(collectionRef, where('managementName', '==', managementName));
+
+    onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const establishmentData = snapshot.docs.map(doc => doc.data())[0];
+        let newSlotSets = [];
+
+        if (Array.isArray(establishmentData.floorDetails)) {
+          newSlotSets = establishmentData.floorDetails.map(floor => ({
+            title: floor.floorName,
+            slots: Array.from({ length: floor.parkingLots }, (_, i) => ({
+              id: i, occupied: false
+            }))
+          }));
+        }
+
+        setSlotSets(newSlotSets);
+      } else {
+        console.log('No such establishment!');
+      }
+    }, (error) => {
+      console.error('Error fetching establishment data:', error);
+    });
+  };
+
+  const handleTabSelect = (key) => {
+    setCurrentTab(key);
+  };
 
   const [recordFound, setRecordFound] = useState(true); 
   const [userFound, setUserFound] = useState(true);
@@ -219,7 +263,7 @@ const fetchData = async (managementName) => {
   
   const addToLogs = async (userDetails, slotNumber) => {
     try {
-      const logsCollectionRef = collection(db, 'logs'); 
+      const logsCollectionRef = collection(db, 'logs',managementName, 'floors' ); 
       const timestamp = new Date();
       const logData = {
         ...userDetails,
@@ -241,13 +285,6 @@ const fetchData = async (managementName) => {
   const [userDetails, setUserDetails] = useState({});
   const [userPlateNumber, setUserPlateNumber] = useState("");
 
-  const getContinuousSlotNumber = (currentSetIndex, slotIndex) => {
-    let previousSlots = 0;
-    for (let i = 0; i < currentSetIndex; i++) {
-      previousSlots += slotSets[i].slots.length;
-    }
-    return previousSlots + slotIndex + 1;
-  };
   const handleAddToSlot = (carPlateNumber, slotIndex) => {
     if (!carPlateNumber || carPlateNumber.trim() === "") {
       setErrorMessage("Please enter a plate number.");
@@ -372,6 +409,78 @@ const handleAcceptReservation = async (reservationId, slotId) => {
   }
 };
 
+const renderFloorTabs = () => {
+  // Function to get the continuous slot number
+  const getContinuousSlotNumber = (floorIndex, slotIndex) => {
+    let totalPreviousSlots = 0;
+    for (let i = 0; i < floorIndex; i++) {
+      totalPreviousSlots += slotSets[i].slots.length;
+    }
+    return totalPreviousSlots + slotIndex + 1;
+  };
+
+  return (
+    <div style={{ marginTop: '20px' }}>
+      <Tab.Container activeKey={currentSetIndex} onSelect={k => setCurrentSetIndex(k)} id="floor-tabs">
+        <Nav variant="tabs" className="flex-row" style={{ justifyContent: 'left', borderColor:'#132B4B' }}>
+          {slotSets.map((slotSet, index) => (
+            <Nav.Item key={index} style={{ width: '150px', textAlign: 'center' }}>
+              <Nav.Link eventKey={index} style={{ borderRadius: '0.25rem', 
+                 backgroundColor: currentSetIndex === index.toString() ? '#00171f' : 'transparent', 
+                 color: currentSetIndex === index.toString() ? 'white' : 'black',
+                 fontWeight: currentSetIndex === index.toString() ? 'bold' : 'normal',
+                 border: currentSetIndex === index.toString() ? '1px solid #28a745' : 'none',
+               }}>{slotSet.title}</Nav.Link>
+            </Nav.Item>
+          ))}
+        </Nav>
+        <Tab.Content>
+          {slotSets.map((slotSet, index) => (
+            <Tab.Pane eventKey={index} key={index}>
+              <h2 style={{textAlign:'center', marginTop:'10vh', textTransform:'uppercase', fontWeight:'bold', fontSize:'36px', color:'#132B4B'}}>{slotSet.title} Floor </h2>
+              <div className='parkingContainer'>
+                <div className='parkingGrid'>
+                  {slotSet.slots.map((slot, slotIndex) => {
+                    const continuousNumber = getContinuousSlotNumber(index, slotIndex);
+                    return (
+                      <div
+                        key={slotIndex}
+                        style={{
+                          width: '95px',
+                          height: '100px',
+                          backgroundColor: slot.occupied ? 'red' : 'green',
+                          color: 'white',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          margin: '5px',
+                          borderRadius: '15px',
+                          boxShadow: slot.occupied ? 
+                          '0 4px 6px #DC143C' : 
+                          '0 6px 8px #00ff00', 
+                       }}
+                        onClick={() => handleSlotClick(slotIndex)}
+                      >
+                        {slot.occupied ? (
+                          <div>
+                            <div>{slot.userDetails ? slot.userDetails.carPlateNumber : continuousNumber} </div>
+                          </div>
+                        ) : (
+                          continuousNumber
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </Tab.Pane>
+          ))}
+        </Tab.Content>
+      </Tab.Container>
+    </div>
+  );
+};
   
   const handleSlotClick = (index) => {
     setSelectedSlot(index);
@@ -429,7 +538,7 @@ const handleAcceptReservation = async (reservationId, slotId) => {
       };
   
       try {
-        const logsCollectionRef = collection(db, 'logs');
+        const logsCollectionRef = collection(db, 'logs', managementName, 'floors' );
         const q = query(logsCollectionRef, where('carPlateNumber', '==', userDetails.carPlateNumber));
         const querySnapshot = await getDocs(q);
   
@@ -457,150 +566,80 @@ const handleAcceptReservation = async (reservationId, slotId) => {
   
 
   return (
-    <div style={{ textAlign: 'center' }}>
-        < nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: "#003851" }}>
-        <div className="container">
-          <a className="navbar-brand">
-            Spotwise
-          </a>
-          <p style={styles.welcomeMessage}>
-            <DropdownButton 
-            variant="outline-light"
-                alignRight
-                title={<FaUserCircle style={styles.icon} />}
-                id="dropdown-menu"
-              >
-                <Dropdown.Item href="OperatorDashboard"><img
-                        src="dashboard.jpg"
-                        alt="Operator Dashboard Logo"
-                        style={{ width: '20px', marginRight: '10px'}}
-                      />Records</Dropdown.Item>
-                      <Dropdown.Item href="OperatorProfile">
-                <img
-                        src="opname.jpg"
-                        alt="Operator Profile Logo"
-                        style={{ width: '20px', marginRight: '10px'}}
-                      />Profile</Dropdown.Item>
-              <Dropdown.Divider />
-              <Dropdown.Item href="/"><img
-                        src="logout.png"
-                        alt="Operator Logout Logo"
-                        style={{ width: '20px', marginRight: '10px'}}
-                      />Logout</Dropdown.Item>
-              </DropdownButton>
-              </p>
+    <div className="d-flex" style={{ minHeight: '100vh' }}>
+      <div className="sidebar" style={{ width: '250px', backgroundColor: '#003851' }}>
+        <div className="sidebar-header" style={{ padding: '20px', color: 'white', textAlign: 'center', fontSize: '24px' }}>
+          <FaUserCircle size={28} style={{ marginRight: '10px' }} /> Welcome,  {user?.firstName || 'No name found'}
         </div>
-      </nav>
-      <div style={{ textAlign: 'center', fontSize: '15px', marginTop:'10px', marginBottom:'15px'}}>
-      {slotSets.length > 0 && (
-     <div>
-     <h3>{slotSets[currentSetIndex].title}</h3>
-     </div>
-       )}
-       {slotSets.length === 0 && !isLoading && <div>No parking zones available.</div>}
-     </div>
-        <div className='parkingGrid'
-       
-      >
-       {slotSets[currentSetIndex] && slotSets[currentSetIndex].slots.map((slot, index) => (
-  <div
-    key={index}
-    style={{
-      width: '90px',
-      height: '80px',
-      backgroundColor: slot.occupied ? 'red' : 'green', // Set background color based on slot.occupied
-      color: 'white',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      cursor: 'pointer',
-      marginLeft: '35px',
-    }}
-    onClick={() => handleSlotClick(index)}
-  >
-    {slot.occupied ? (
-      <div>
-        <div>{slot.userDetails ? slot.userDetails.carPlateNumber : getContinuousSlotNumber(currentSetIndex, index)}</div>
+        <div class="wrapper">
+          <div class="side">
+            <h2>Menu</h2>
+            <ul>
+              <li><a href="ViewSpace"><i class="fas fa-home"></i>Home</a></li>
+              <li><a href='Reservation'><i class="fas fa-user"></i>Manage Reservation</a></li>
+              <li><a href='OperatorDashboard'><i class="fas fa-address-card"></i>Records</a></li>
+              <li><a href="OperatorProfile"><i class="fas fa-blog"></i>Profile</a></li>
+              <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
+            </ul>
+          </div>
+        </div>
       </div>
-    ) : (
-      getContinuousSlotNumber(currentSetIndex, index)
-    )}
-  </div>
-))}
-</div>
+      <div style={{ flex: 1, padding: '10px' }}>
+          {slotSets.length > 0 ? renderFloorTabs() : <p>Loading floors...</p>}
+        </div>
+      
       <Modal show={showModal} onHide={() => setShowModal(false)}>
-  <Modal.Header closeButton>
-    <Modal.Title>Parking Slot {selectedSlot + 1}</Modal.Title>
-  </Modal.Header>
-  <Modal.Body>
-  {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
- 
-  {selectedSlot !== null && (
-  <SearchForm
-  onSearch={searchInFirebase}
-  onSelectSlot={(carPlateNumber) => handleAddToSlot(carPlateNumber, selectedSlot)}
-  onExitSlot={() => handleExitSlot(selectedSlot)}
-  selectedSlot={selectedSlot}
-  userDetails={userDetails}
-/>
+        <Modal.Header closeButton>
+          <Modal.Title>Parking Slot {selectedSlot + 1}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
 
-  )}
-{selectedSlot !== null && userDetails !== null && (
-  <div style={{ marginTop: '10px' }}>
-    <h4>User Details:</h4>
-    <p>Email: {userDetails.email}</p>
-    <p>Contact Number: {userDetails.contactNumber}</p>
-    <p>Car Plate Number: {userDetails.carPlateNumber}</p>
-    <p>Gender: {userDetails.gender}</p>
-    <p>Age: {userDetails.age}</p>
-    <p>Address: {userDetails.address}</p>
-    {slotSets[currentSetIndex].slots[selectedSlot].timestamp && (
-      <p>Timestamp: {slotSets[currentSetIndex].slots[selectedSlot].timestamp.toString()}</p>
-    )}
-  </div>
-)}
-  </Modal.Body>
-  <Modal.Footer>
-  {recordFound ? null : <div style={{ color: 'red' }}>No record found for this car plate number.</div>}
-  </Modal.Footer>
-</Modal>
-    <Modal show={showExitConfirmation} onHide={handleCancelExit}>
-      <Modal.Header closeButton>
-        <Modal.Title>Confirmation</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>Are you sure you want to vacant this slot?</Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={handleCancelExit}>
-          No
-        </Button>
-        <Button variant="primary" onClick={handleConfirmExit}>
-          Yes
-        </Button>
-      </Modal.Footer>
-    </Modal>
-
-    <div style={{ textAlign: 'center', marginTop: '10px' }}>
-      <Button onClick={handleButtonClick}>Manage Reservation</Button>
-    </div>
-    
-      <div style={{textAlign: 'center', fontFamily:'Georgina', fontSize:'15px', marginTop:'10px'}}>
-          <span>  Total Parking Spaces: {totalParkingSpaces}</span>
-          <br />
-          <span> Available Spaces: {availableParkingSpaces}</span>
-        </div>
-        <div style={{ textAlign: 'center', marginTop: '5px', fontSize:'15px'}}>
-            <div style={{ display: 'inline-block', width: '10px', height: '10px', backgroundColor: 'green', marginRight: '10px' }}></div>
-                <span>Available</span>
-                     <div style={{ display: 'inline-block', width: '10px', height: '10px', backgroundColor: 'red', marginLeft: '20px', marginRight: '10px' }}></div>
-                 <span>Occupied</span>
+          {selectedSlot !== null && (
+            <SearchForm
+              onSearch={searchInFirebase}
+              onSelectSlot={(carPlateNumber) => handleAddToSlot(carPlateNumber, selectedSlot)}
+              onExitSlot={() => handleExitSlot(selectedSlot)}
+              selectedSlot={selectedSlot}
+              userDetails={userDetails}
+            />
+          )}
+          {selectedSlot !== null && userDetails !== null && (
+            <div style={{ marginTop: '10px' }}>
+              <h4>User Details:</h4>
+              <p>Email: {userDetails.email}</p>
+              <p>Contact Number: {userDetails.contactNumber}</p>
+              <p>Car Plate Number: {userDetails.carPlateNumber}</p>
+              <p>Gender: {userDetails.gender}</p>
+              <p>Age: {userDetails.age}</p>
+              <p>Address: {userDetails.address}</p>
+              {slotSets[currentSetIndex].slots[selectedSlot].timestamp && (
+                <p>Timestamp: {slotSets[currentSetIndex].slots[selectedSlot].timestamp.toString()}</p>
+              )}
             </div>
-      <div style={{textAlign: 'center', fontSize: '20px', fontWeight: 'bold', marginTop: '5px', marginLeft:'450px', marginBottom:'5px'}}>
-          <Button onClick={handlePrev} style={{ marginRight: '20px', backgroundColor: 'gray' }}>Prev</Button>
-          <Button onClick={handleNext}>Next</Button>
-        </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          {recordFound ? null : <div style={{ color: 'red' }}>No record found for this car plate number.</div>}
+        </Modal.Footer>
+      </Modal>
+      <Modal show={showExitConfirmation} onHide={handleCancelExit}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmation</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Are you sure you want to vacant this slot?</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCancelExit}>
+            No
+          </Button>
+          <Button variant="primary" onClick={handleConfirmExit}>
+            Yes
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
-    
   );
 };
+
 
 export default ParkingSlot;

@@ -234,24 +234,6 @@
     font-size: 1.2rem; 
     font-weight: bold; 
   }  
-  @keyframes wiggle {
-    0% { transform: rotate(-5deg); }
-    50% { transform: rotate(5deg); }
-    100% { transform: rotate(-5deg); }
-}
-
-.card {
-    cursor: pointer;
-    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    transform-style: preserve-3d;
-    perspective: 1000px;
-}
-
-.card:hover {
-    animation: wiggle 0.5s infinite; /* Apply the wiggle animation */
-    transform: scale(1.05) rotateY(10deg);
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-}
   
   /* Colors for different card types */
   .card-occupied {
