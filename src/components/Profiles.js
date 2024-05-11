@@ -15,6 +15,7 @@ import { storage } from "../config/firebase";
 import { ref, uploadBytes, getDownloadURL, listAll, list } from "firebase/storage";
 import { v4 } from "uuid";
 
+
 export default function EditButton() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -214,217 +215,120 @@ export default function EditButton() {
 
     return (
         <section style={{ backgroundSize: "cover", backgroundRepeat: "no-repeat", minHeight: "100vh", backgroundColor: "white" }}>
-            <nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: "#003851" }}>
-                <div className="container">
-                <Link className="navbar-brand" to="/Dashboard" style={{ fontSize: '25px'}}>
-            SpotWise 
-          </Link>
-                    <p style={styles.welcomeMessage}>
-                        <DropdownButton alignRight variant="outline-light" title={<FaUserCircle style={styles.icon} />} id="dropdown-menu">
-                            <Dropdown.Item href="Dashboard">
-                                <img src="dashboard.jpg" alt="Operator Dashboard Logo" style={{ width: "20px", marginRight: "10px" }} />
-                                Dashboard
-                            </Dropdown.Item>
-                            <Dropdown.Item href="AgentSchedule">
-                                <img src="calendar.webp" alt="Agent Schedule" style={{ width: "20px", marginRight: "10px" }} />
-                                Agent Schedule{" "}
-                            </Dropdown.Item>
-                            <Dropdown.Item href="AgentRegistration">
-                                <img src="registerA.jpg" alt="Agent Register" style={{ width: "20px", marginRight: "10px" }} />
-                                Register Ticket Operator
-                            </Dropdown.Item>
-                            <Dropdown.Item href="TicketInfo">
-                                <img src="infoPark.png" alt="Parking Info" style={{ width: "20px", marginRight: "10px" }} />
-                                Ticket Information
-                            </Dropdown.Item>
-                            <Dropdown.Item href="Tracks">
-                                <img src="management.jpg" alt="Management Details" style={{ width: "20px", marginRight: "10px" }} />
-                                Management Details
-                            </Dropdown.Item>
-                            <Dropdown.Item href="Feedback">
-                                <img src="feedback.jpg" alt="Feedback" style={{ width: "20px", marginRight: "10px" }} />
-                                Feedback
-                            </Dropdown.Item>
-                            <Dropdown.Divider />
-                            <Dropdown.Item href="/">
-                                <img src="logout.png" alt="Operator Logout Logo" style={{ width: "20px", marginRight: "10px" }} />
-                                Logout
-                            </Dropdown.Item>
-                        </DropdownButton>
-                    </p>
+              <div className="admin-dashboard"> {/* Adjusted marginTop to account for navbar */}
+        <div className="sidebar">
+            <div className="admin-container">
+            </div>
+            <div class="wrapper">
+                <div class="side">
+                    <div>
+                                {profileImageUrl ? <MDBCardImage src={profileImageUrl} alt="Operator Profile Logo" className="rounded-circle" style={{ width: "70px"}} fluid /> : <MDBCardImage src="default_placeholder.jpg" alt="Default Profile Logo" className="rounded-circle" style={{ width: "70px", marginTop: '-6vh' }} fluid />}
+                                <p style={{ fontFamily: "Georgina", fontSize: "20px", border: "white", fontWeight: "bold", colo: 'white'}}>Administrator</p>
+                                <p style={{ fontFamily: "Georgina", color: "white", fontWeight: "bold", fontSize: 12, marginTop: -15}}>
+                                    {managementName}                 
+                                </p>
+                                </div>            
+                    <h2>Menu</h2>
+                    <ul>
+                        <li><a href="Dashboard"><i class="fas fa-home"></i>Home</a></li>
+                        <li><a href='AgentRegistration'><i class="fas fa-user"></i>Account Management</a></li>
+                        <li><a href='TicketInfo'><i class="fas fa-address-card"></i>Ticket Management</a></li>
+                        <li><a href='Tracks'><i class="fas fa-project-diagram"></i>Management Details</a></li>
+                        <li><a href="AgentSchedule"><i class="fas fa-blog"></i>Schedule Management</a></li>
+                        <li><a href="Profiles"><i class="fas fa-blog"></i>Profile</a></li>
+                        <li><a href="Feedback"><i class="fas fa-blog"></i>Feedback</a></li>
+                        <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
+                    </ul>
+
+                    
                 </div>
-            </nav>
+                
+            </div>
+            <nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: '#132B4B', position: "fixed", width: "500vh", marginLeft: '-150vh',height: '15%', marginTop: '-8%'}}>
+<div className="container">
+    <Link className="navbar-brand" to="/Dashboard" style={{ fontSize: "25px"}}>
+    </Link>
+</div>
+</nav>
+</div>
 
-            <MDBContainer className="py-4">
-                <MDBRow>
-                    <MDBCol lg="4">
-                        <MDBCard style={{ marginTop: "45px", color: "#fff" }}>
-                            <MDBCardBody className="text-center">
-                                <p style={{ fontFamily: "Georgina", fontSize: "25px", color: "black", border: "white", fontWeight: "bold" }}>Administrator</p>
-                                {profileImageUrl ? <MDBCardImage src={profileImageUrl} alt="Operator Profile Logo" className="rounded-circle" style={{ width: "70px" }} fluid /> : <MDBCardImage src="default_placeholder.jpg" alt="Default Profile Logo" className="rounded-circle" style={{ width: "70px" }} fluid />}
-                                <p className="text-muted mb-1" style={{ fontFamily: "Georgina", marginTop: "15px", color: "black", fontWeight: "bold" }}>
-                                    {managementName}
-                                </p>
-                                <p className="text-muted mb-4" style={{ fontFamily: "Georgina", fontWeight: "bold" }}>
-                                    {address}
-                                </p>
-                            </MDBCardBody>
+<MDBContainer className="py-5" style={{ backgroundColor: "#f9f9f9" , marginTop: '10vh'}}>
+    <MDBRow className="justify-content-center">
+        <MDBCol md="8">
+            <MDBCard className="shadow">
+                <MDBCardBody>
+                    <div className="text-center mb-4">
+                        <MDBCardImage src={profileImageUrl || "defaultt.png"} alt="Profile" className="img-thumbnail" style={{ width: "150px", borderRadius: "50%" }} />
+                    </div>
+                    {isEditing ? (
+                        <>
+                            <div className="mb-3">
+                                <input type="file" className="form-control" id="file-upload" onChange={(event) => setImageUpload(event.target.files[0])} style={{ display: "none" }} />
+                                <label htmlFor="file-upload">
+                                    <MDBBtn outline color="dark" className="mb-3" style={{ overflow: "visible" }} component="span">
+                                        Upload Image
+                                    </MDBBtn>
+                                </label>
+                            </div>
+                            <div className="mb-3">
+                                <input type="text" className="form-control" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+                            </div>
+                            <div className="mb-3">
+                                <input type="text" className="form-control" placeholder="Location" value={address} onChange={(e) => setAddress(e.target.value)} />
+                            </div>
+                            <div className="mb-3">
+                                <input type="email" className="form-control" placeholder="Email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)} />
+                            </div>
+                            <div className="mb-3">
+                                <input type="tel" className="form-control" placeholder="Contact Number" value={companyContact} onChange={(e) => setCompanyContact(e.target.value)} />
+                            </div>
+                            <MDBBtn color="primary" className="me-2" onClick={handleSaveProfile}>
+                                Save Changes
+                            </MDBBtn>
+                            <MDBBtn color="danger" onClick={toggleEditing}>
+                                Cancel
+                            </MDBBtn>
+                        </>
+                    ) : (
+                        <>
+                            <h4 className="card-title mb-4">{name}</h4>
+                            <p className="card-text mb-1">Location: {address}</p>
+                            <p className="card-text mb-1">Email: {companyEmail}</p>
+                            <p className="card-text mb-1">Contact Number: {companyContact}</p>
+                            <MDBBtn color="dark" className="mb-3" onClick={toggleEditing}>
+                                Edit Profile
+                            </MDBBtn>
+                        </>
+                    )}
+                </MDBCardBody>
+            </MDBCard>
+        </MDBCol>
+        <MDBCol lg="4" style={{marginTop: '-5vh'}}>
+            <div className="row mt-5">
+                <h1 style={{ color: "black", fontSize: "30px" }}> Company Parking Lot </h1>
+            </div>
+            <hr style={{ marginTop: "30px", marginBottom: "35px", border: "none" }} />
 
-                            <MDBCard className="mb-4 mb-lg-0" style={{ marginTop: "40px", boxShadow: "none", border: "none" }}>
-                                <MDBCardBody className="p-0">
-                                    <MDBListGroup
-                                        flush
-                                        className="rounded-3"
-                                        style={{
-                                            border: "none",
-                                            borderRadius: "none",
-                                            boxShadow: "none",
-                                        }}
-                                    >
-                                        <MDBListGroupItem style={{ ...listItemStyle, ...customListItemStyle }} hover className="d-flex justify-content-between align-items-center p-3" onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = listItemHoverStyle.backgroundColor)} onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "inherit")}>
-                                            <MDBCardText onClick={() => handleAgentSchedule()} style={{ fontFamily: "Georgina", fontSize: "18px", color: "black" }}>
-                                                <img src="calendar.webp" alt="Calendar" style={{ width: "25px", marginRight: "30px" }} />
-                                                Agent Schedule
-                                            </MDBCardText>
-                                        </MDBListGroupItem>
-                                        <MDBListGroupItem style={{ ...listItemStyle, ...customListItemStyle }} hover className="d-flex justify-content-between align-items-center p-3" onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = listItemHoverStyle.backgroundColor)} onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "inherit")}>
-                                            <MDBCardText onClick={() => handleRegister()} style={{ fontFamily: "Georgina", fontSize: "18px", color: "black" }}>
-                                                <img src="registerA.jpg" alt="User" style={{ width: "25px", marginRight: "30px" }} />
-                                                Register Ticket Operator
-                                            </MDBCardText>
-                                        </MDBListGroupItem>
-                                        
-                                        <MDBListGroupItem style={{ ...listItemStyle, ...customListItemStyle }} hover className="d-flex justify-content-between align-items-center p-3" onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = listItemHoverStyle.backgroundColor)} onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "inherit")}>
-                                            <MDBCardText onClick={() => handleViewProfile()} style={{ fontFamily: "Georgina", fontSize: "18px", color: "black" }}>
-                                                <img src="pofile.jpg" alt="Profile" style={{ width: "25px", marginRight: "30px" }} />
-                                                View Profile
-                                            </MDBCardText>
-                                        </MDBListGroupItem>
-                                        <MDBListGroupItem style={{ ...listItemStyle, ...customListItemStyle }} hover className="d-flex justify-content-between align-items-center p-3" onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = listItemHoverStyle.backgroundColor)} onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "inherit")}>
-                                            <MDBCardText onClick={() => handleRevenues()} style={{ fontFamily: "Georgina", fontSize: "18px", color: "black" }}>
-                                                <img src="management.jpg" alt="Management" style={{ width: "25px", marginRight: "30px" }} />
-                                                Management Details
-                                            </MDBCardText>
-                                        </MDBListGroupItem>
-                                        <MDBListGroupItem style={{ ...listItemStyle, ...customListItemStyle }} hover className="d-flex justify-content-between align-items-center p-3" onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = listItemHoverStyle.backgroundColor)} onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "inherit")}>
-                                            <MDBCardText onClick={() => handleFeed()} style={{ fontFamily: "Georgina", fontSize: "18px", color: "black" }}>
-                                                <img src="feedback.jpg" alt="Feedback" style={{ width: "25px", marginRight: "30px" }} />
-                                                Feedback
-                                            </MDBCardText>
-                                        </MDBListGroupItem>
-                                        <Button onClick={handlelogin} style={{ fontFamily: "Georgina", width: "80px", backgroundColor: "rgba(4, 55,55, 0.7)", marginLeft: "80px", marginTop: "75px", border: "none" }}>
-                                            Logout
-                                        </Button>
-                                    </MDBListGroup>
-                                </MDBCardBody>
-                            </MDBCard>
-                        </MDBCard>
-                    </MDBCol>
-
-                    <MDBCol lg="4">
-                        <div className="row mt-5">
-                            <h1 style={{ color: "black", fontSize: "30px"  }}> Personal Info </h1>
-                        </div>
-
-                        <MDBContainer className="py-5" style={{ backgroundColor: "#fbfbfb" }}>
-                            <MDBRow>
-                                <MDBCol lg="9" xl="12">
-                                    <MDBCard style={{ border: "none", boxShadow: "none",backgroundColor: "#f2f2f2"}}>
-                                        <div className="d-flex flex-column">
-                                            <div className="rounded-top text-white ms-4 mt-4 d-flex align-items-center">
-                                                <MDBCardImage src={profileImageUrl || "defaultt.png"} alt="Profile" className="mt-2 mb-2 img-thumbnail" fluid style={{ width: "150px", zIndex: "1", borderRadius: "50%" }} />
-                                                {isEditing && (
-                                                    <div className="ms-3">
-                                                        <input type="file" onChange={(event) => setImageUpload(event.target.files[0])} style={{ marginBottom: "10px" }} />
-                                                        <MDBBtn outline color="dark" style={{ height: "35px", overflow: "visible" }} onClick={uploadFile}>
-                                                            Upload
-                                                        </MDBBtn>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="ms-4 mt-4">
-                                                {isEditing ? (
-                                                    <>
-                                                        <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} style={{ marginBottom: "10px" }} />
-                                                        <input type="text" placeholder="Location" value={address} onChange={(e) => setAddress(e.target.value)} style={{ marginBottom: "10px" }} />
-                                                        <input type="text" placeholder="Email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)} style={{ marginBottom: "10px" }} />
-                                                        <input type="text" placeholder="Contact Number" value={companyContact} onChange={(e) => setCompanyContact(e.target.value)} style={{ marginBottom: "10px" }} />
-                                                        <MDBBtn outline color="dark" style={{ height: "36px", marginTop: "20px", width: "100%" }} onClick={handleSaveProfile}>
-                                                            {" "}
-                                                            {/* Added width: 100% */}
-                                                            Save Changes
-                                                        </MDBBtn>
-                                                    </>
-                                                ) : (
-                                                    <></>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="p-4 text-black" style={{ fontFamily: "Georgina"}}>
-                                            {!isEditing && (
-                                                <MDBBtn color="dark" style={{ height: "36px", overflow: "visible", backgroundColor: "rgba(4, 55,55, 0.7) " ,border: "none" }} onClick={toggleEditing}>
-                                                    Edit Profile
-                                                </MDBBtn>
-                                            )}
-                                        </div>
-                                        <MDBCardBody className="text-black p-4" style={{ fontFamily: "Georgina" }}>
-                                            <div className="mb-5">
-                                                {isEditing ? (
-                                                    <div className="p-4"></div>
-                                                ) : (
-                                                    <div className="p-4" style={{ fontFamily: "Georgina", color: "black" }}>
-                                                        <hr style={{ marginTop: "5px", marginBottom: "5px", borderColor: "#000000" }} />
-                                                        <MDBCardText className="font-italic mb-1">
-                                                            <img src="esLogo.png" alt="Establishment User Logo" style={{ width: "20px", marginRight: "10px" }} />
-                                                            Username: {name}
-                                                        </MDBCardText>
-                                                        <MDBCardText className="font-italic mb-1">
-                                                            <img src="esA.png" alt="Establishment Address Logo" style={{ width: "20px", marginRight: "10px" }} />
-                                                            Address: {address}
-                                                        </MDBCardText>
-                                                        <MDBCardText className="font-italic mb-1">
-                                                            <img src="ope.jpg" alt="Establishment User Logo" style={{ width: "20px", marginRight: "10px" }} />
-                                                            Email: {companyEmail}
-                                                        </MDBCardText>
-                                                        <MDBCardText className="font-italic mb-1">
-                                                            <img src="opcontact.png" alt="Establishment User Logo" style={{ width: "20px", marginRight: "10px" }} />
-                                                            Contact: {companyContact}
-                                                        </MDBCardText>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </MDBCardBody>
-                                    </MDBCard>
-                                </MDBCol>
-                            </MDBRow>
-                        </MDBContainer>
-                    </MDBCol>
-                    <MDBCol lg="4">
-                        <div className="row mt-5">
-                            <h1 style={{ color: "black", fontSize: "30px" }}> Company Parking Lot </h1>
-                        </div>
-                        <hr style={{ marginTop: "30px", marginBottom: "35px", border: "none" }} />
-
-                        <MDBRow className="g-2">
-                            <MDBCol className="mb-2">
-                                <MDBCardImage src="https://static-ph.lamudi.com/static/media/bm9uZS9ub25l/2x2x2x380x244/7e83cd57260dee.jpg" alt="image 1" style={imageSizeStyles} className="rounded-3" />
-                            </MDBCol>
-                            <MDBCol className="mb-2">
-                                <MDBCardImage src="https://static-ph.lamudi.com/static/media/bm9uZS9ub25l/2x2x5x880x396/54e6e09d3e6e1a.jpg" alt="image 1" style={imageSizeStyles} className="rounded-3" />
-                            </MDBCol>
-                        </MDBRow>
-                        <MDBRow className="g-2">
-                            <MDBCol className="mb-2">
-                                <MDBCardImage src="https://www.apartmentguide.com/blog/wp-content/uploads/2019/10/parking_garage_HERO.jpg" alt="image 1" style={imageSizeStyles} className="rounded-3" />
-                            </MDBCol>
-                            <MDBCol className="mb-2">
-                                <MDBCardImage src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_pn4I4ZoKpjQEPxu-qmz_Db7y-jZrbNLFdAWdsG3-GUcCw-XW9SESLsm-VkkNBLy7KFI&usqp=CAU" alt="image 1" style={imageSizeStyles} className="rounded-3" />
-                            </MDBCol>
-                        </MDBRow>
-                    </MDBCol>
-                </MDBRow>
-            </MDBContainer>
+            <MDBRow className="g-2">
+    <MDBCol className="mb-2">
+        <MDBCardImage src="https://static-ph.lamudi.com/static/media/bm9uZS9ub25l/2x2x2x380x244/7e83cd57260dee.jpg" alt="image 1" style={{ width: "100%", height: "auto", borderRadius: "10px", animation: "fadeIn 1s ease-in-out", transition: "transform 0.3s ease", ":hover": { transform: "scale(1.05)" } }} />
+    </MDBCol>
+    <MDBCol className="mb-2">
+        <MDBCardImage src="https://static-ph.lamudi.com/static/media/bm9uZS9ub25l/2x2x5x880x396/54e6e09d3e6e1a.jpg" alt="image 1" style={{ width: "100%", height: "auto", borderRadius: "10px", animation: "fadeIn 1s ease-in-out", transition: "transform 0.3s ease", ":hover": { transform: "scale(1.05)" } }} />
+    </MDBCol>
+</MDBRow>
+<MDBRow className="g-2">
+    <MDBCol className="mb-2">
+        <MDBCardImage src="https://www.apartmentguide.com/blog/wp-content/uploads/2019/10/parking_garage_HERO.jpg" alt="image 1" style={{ width: "100%", height: "auto", borderRadius: "10px", animation: "fadeIn 1s ease-in-out", transition: "transform 0.3s ease", ":hover": { transform: "scale(1.05)" } }} />
+    </MDBCol>
+    <MDBCol className="mb-2">
+        <MDBCardImage src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_pn4I4ZoKpjQEPxu-qmz_Db7y-jZrbNLFdAWdsG3-GUcCw-XW9SESLsm-VkkNBLy7KFI&usqp=CAU" alt="image 1" style={{ width: "100%", height: "100%", borderRadius: "10px", animation: "fadeIn 1s ease-in-out", transition: "transform 0.3s ease", ":hover": { transform: "scale(1.05)" } }} />
+    </MDBCol>
+</MDBRow>
+        </MDBCol>
+    </MDBRow>
+</MDBContainer>;
+            </div>
         </section>
     );
 }

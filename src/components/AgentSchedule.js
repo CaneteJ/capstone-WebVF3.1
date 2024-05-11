@@ -13,6 +13,8 @@ import { FaUserCircle } from "react-icons/fa";
 import { getFirestore, collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { db } from "../config/firebase";
 import "../calendar.css";
+import { Card } from 'react-bootstrap';
+
 
 function Calendar() {
     const [showModal, setShowModal] = useState(false);
@@ -211,66 +213,46 @@ function Calendar() {
         "markym@gmail.com": "green",
     };
     return (
-        <section
-            style={{
-                backgroundSize: "cover",
-                backgroundRepeat: "no-repeat",
-                minHeight: "100vh",
-                backgroundColor: "white", // Set a background color in case the image is not fully loaded
-            }}
-        >
-            <div
-                style={{
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    backgroundColor: "white", // Background color with transparency
-                }}
-            ></div>
-            <div className="dashboard-container"></div>
-            <div style={{ fontSize: "20px" }}>
-                <nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: "#003851", marginBottom: "20px" }}>
-                    <div className="container">
-                    <Link className="navbar-brand" to="/Dashboard" style={{ fontSize: '25px'}}>
-            SpotWise 
-          </Link>
-                        <p style={styles.welcomeMessage}>
-                            <DropdownButton alignRight variant="outline-light" title={<FaUserCircle style={styles.icon} />} id="dropdown-menu">
-                                <Dropdown.Item href="Dashboard">
-                                    <img src="dashboard.jpg" alt="Operator Dashboard Logo" style={{ width: "20px", marginRight: "10px" }} />
-                                    Dashboard
-                                </Dropdown.Item>
-                                <Dropdown.Item href="AgentRegistration">
-                                    <img src="registerA.jpg" alt="Agent Register" style={{ width: "20px", marginRight: "10px" }} />
-                                    Register Ticket Operator
-                                </Dropdown.Item>
-                                <Dropdown.Item href="TicketInfo">
-                                    <img src="infoPark.png" alt="Parking Info" style={{ width: "20px", marginRight: "10px" }} />
-                                    Ticket Information
-                                </Dropdown.Item>
-                                <Dropdown.Item href="Profiles">
-                                    <img src="pofile.jpg" alt="Management Details" style={{ width: "20px", marginRight: "10px" }} />
-                                    View Profile
-                                </Dropdown.Item>
-                                <Dropdown.Item href="Tracks">
-                                    <img src="management.jpg" alt="Management Details" style={{ width: "20px", marginRight: "10px" }} />
-                                    Management Details
-                                </Dropdown.Item>
-                                <Dropdown.Item href="Feedback">
-                                    <img src="feedback.jpg" alt="Feedback" style={{ width: "20px", marginRight: "10px" }} />
-                                    Feedback
-                                </Dropdown.Item>
-                                <Dropdown.Divider />
-                                <Dropdown.Item href="/">
-                                    <img src="logout.png" alt="Operator Logout Logo" style={{ width: "20px", marginRight: "10px" }} />
-                                    Logout
-                                </Dropdown.Item>
-                            </DropdownButton>
-                        </p>
-                    </div>
-                </nav>
+        <section>
+    
+          
+    <div className="admin-dashboard"> {/* Adjusted marginTop to account for navbar */}
+       <div className="sidebar">
+           <div className="admin-container">
+           </div>
+           <div class="wrapper">
+               <div class="side">
+                   <div>
+                              
+                               <p style={{ fontFamily: "Georgina", fontSize: "20px", border: "white", fontWeight: "bold", colo: 'white'}}>Administrator</p>
+                              
+                               </div>            
+                   <h2>Menu</h2>
+                   <ul>
+                       <li><a href="Dashboard"><i class="fas fa-home"></i>Home</a></li>
+                       <li><a href='AgentRegistration'><i class="fas fa-user"></i>Account Management</a></li>
+                       <li><a href='TicketInfo'><i class="fas fa-address-card"></i>Ticket Management</a></li>
+                       <li><a href='Tracks'><i class="fas fa-project-diagram"></i>Management Details</a></li>
+                       <li><a href="AgentSchedule"><i class="fas fa-blog"></i>Schedule Management</a></li>
+                       <li><a href="Profiles"><i class="fas fa-blog"></i>Profile</a></li>
+                       <li><a href="Feedback"><i class="fas fa-blog"></i>Feedback</a></li>
+                       <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
+                   </ul>
 
+                   
+               </div>
+               
+           </div>
+           <nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: '#132B4B', position: "fixed", width: "500vh", marginLeft: '-150vh',height: '15%', marginTop: '-8%'}}>
+<div className="container">
+   <Link className="navbar-brand" to="/Dashboard" style={{ fontSize: "25px"}}>
+   </Link>
+</div>
+</nav>
+</div>
+
+<Card style={{ width: '70%', margin: 'auto', borderWidth: 1, borderColor: '#132B4B',  boxShadow: '0 5px 8px rgba(0, 0, 0, 0.1)' }}>
+            <Card.Body style={{ width: '140vh', margin: 'auto'}}>
                 <FullCalendar
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                     initialView="dayGridMonth"
@@ -278,12 +260,14 @@ function Calendar() {
                         start: "today prev,next",
                         center: "title",
                         end: "dayGridMonth,timeGridWeek,timeGridDay",
+                        
                     }}
-                    height="90vh"
+                    height="60vh"
                     events={events}
                     eventClick={handleEventClick}
                     timeZone="Asia/Manila"
                     locale="en"
+           
                 />
                 <Modal show={showModal} onHide={handleModalClose} style={{ fontFamily: "Georgina", fontSize: "18px" }}>
                     <Modal.Header closeButton>
@@ -303,7 +287,7 @@ function Calendar() {
                     </Modal.Footer>
                 </Modal>
                 <div style={{ textAlign: "center", margin: "20px 0px" }}>
-                    <Button onClick={handleModalOpen} style={{ padding: "10px 40px", backgroundColor: "#003851", border: "none" }}>
+                    <Button onClick={handleModalOpen} style={{ padding: "10px 40px", backgroundColor: "#132B4B", border: "none", borderRadius: 100 }}>
                         Add Event
                     </Button>
                 </div>
@@ -395,6 +379,8 @@ function Calendar() {
                         </Button>
                     </Modal.Footer>
                 </Modal>
+            </Card.Body>
+        </Card>
             </div>
         </section>
     );
