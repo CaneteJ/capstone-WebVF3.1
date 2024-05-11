@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useMemo} from 'react';
 import { Button, Modal, Form, Tab, Nav} from 'react-bootstrap';
 import { Dropdown, DropdownButton } from 'react-bootstrap';
 import { Link, } from 'react-router-dom';
-import { FaUserCircle } from "react-icons/fa";
+import { FaUserCircle, FaBars } from "react-icons/fa";
 import { db } from "../config/firebase";
 import { collection, getDocs, query, where, serverTimestamp,addDoc, setDoc, doc, getDoc, onSnapshot, deleteDoc} from 'firebase/firestore';
 import SearchForm from './SearchForm';
@@ -13,6 +13,7 @@ import './space.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons';
 import Card from 'react-bootstrap/Card';
+
 
 const ParkingSlot = () => {
     const styles = {
@@ -38,6 +39,7 @@ const ParkingSlot = () => {
   const [showConfirmation, setShowConfirmation] = useState(false); 
   const [slotSets, setSlotSets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(true);
 
   const totalParkingSpaces = slotSets.reduce((total, slotSet) => total + slotSet.slots.length, 0);
 const availableParkingSpaces = slotSets.reduce((available, slotSet) => {
@@ -602,11 +604,13 @@ const renderFloorTabs = () => {
     setUserDetails({});         // Reset user details if necessary
 };
 
-  
+const toggleSidebar = () => {
+  setShowSidebar(!showSidebar);
+};
 
   return (
     <div className="d-flex" style={{ minHeight: '100vh' }}>
-      <div className="sidebar" style={{ width: '250px', backgroundColor: '#003851' }}>
+      <div className="sidebar" style={{ width: '250px',  }}>
         <div className="sidebar-header" style={{ padding: '20px', color: 'white', textAlign: 'center', fontSize: '24px' }}>
           <FaUserCircle size={28} style={{ marginRight: '10px' }} /> Welcome,  {user?.firstName || 'No name found'}
         </div>
@@ -614,7 +618,8 @@ const renderFloorTabs = () => {
           <div class="side">
             <h2>Menu</h2>
             <ul>
-              <li><a href="ViewSpace"><i class="fas fa-home"></i>Home</a></li>
+            <li><a href="Home"><i class="fas fa-home"></i>Home</a></li>
+              <li><a href="ViewSpace"><i class="fas fa-home"></i>Manage Parking</a></li>
               <li><a href='Reservation'><i class="fas fa-user"></i>Manage Reservation</a></li>
               <li><a href='OperatorDashboard'><i class="fas fa-address-card"></i>Records</a></li>
               <li><a href="OperatorProfile"><i class="fas fa-blog"></i>Profile</a></li>

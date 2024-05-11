@@ -531,7 +531,7 @@ const Reservation = () => {
             <nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: "#132B4B"}}>
     <div className="container d-flex justify-content-between">
         <a className="navbar-brand" style={{padding: 35}}>
-            {/* Your logo or brand name here */}
+            
         </a>
         <div>
             <button className="btn" onClick={() => setShowNotification(!showNotification)} style={{ color: 'white', border: 'none', background: 'none' }}>

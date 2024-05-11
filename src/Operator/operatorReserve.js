@@ -146,13 +146,16 @@ const OperatorReserve = () => {
                         style={{ width: '30px', marginRight: '5px', marginLeft: '-50px' }} 
                     />
                     {/* Display the user's email if available */}
-                    <h1 style={{fontFamily:'Helvetica', fontSize: 16}}>Welcome {user?.firstName || 'No name found'}</h1>
+                    <div className="sidebar-header" style={{ padding: '20px', color: 'white', textAlign: 'center', fontSize: '24px' }}>
+          <FaUserCircle size={28} style={{ marginRight: '10px' }} /> Welcome,  {user?.firstName || 'No name found'}
+        </div>
                 </div>
                 <div class="wrapper">
     <div class="side">
         <h2>Menu</h2>
         <ul>
-            <li><a href="ViewSpace"><i class="fas fa-home"></i>Home</a></li>
+            <li><a href="Home"><i class="fas fa-home"></i>Home</a></li>
+            <li><a href="ViewSpace"><i class="fas fa-home"></i>Manage Parking</a></li>
             <li><a href='Reservation'><i class="fas fa-user"></i>Manage Reservation</a></li>
             <li><a href='OperatorDashboard'><i class="fas fa-address-card"></i>Records</a></li>
             <li><a href="OperatorProfile"><i class="fas fa-blog"></i>Profile</a></li>

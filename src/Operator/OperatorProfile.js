@@ -179,37 +179,10 @@ export default function EditButton() {
 
   return (
     <div className="gradient-custom-2" style={{ backgroundColor: 'white' }}>
-      <nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: "#003851" }}>
+      <nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: "#132B4B" }}>
         <div className="container">
-          <a className="navbar-brand" style={{padding: 30}}>
-
+          <a className="navbar-brand" style={{padding: 20}}>
           </a>
-          
-          <p style={styles.welcomeMessage}>
-            <DropdownButton
-              alignRight
-              variant="outline-light"
-              title={<FaUserCircle style={styles.icon} />}
-              id="dropdown-menu"
-            >
-               <Dropdown.Item href="DashboardOp"><img
-                        src="slot1.jpeg"
-                        alt="Operator Parking Slot Logo"
-                        style={{ width: '20px', marginRight: '10px'}}
-                      />Dashboard</Dropdown.Item>
-              <Dropdown.Item href="OperatorDashboard"><img
-                        src="dashboard.jpg"
-                        alt="Operator Dashboard Logo"
-                        style={{ width: '20px', marginRight: '10px'}}
-                      />Records</Dropdown.Item>
-              <Dropdown.Divider />
-              <Dropdown.Item href="/"><img
-                        src="logout.png"
-                        alt="Operator Logout Logo"
-                        style={{ width: '20px', marginRight: '10px'}}
-                      />Logout</Dropdown.Item>
-            </DropdownButton>
-          </p>
         </div>
       </nav>
       <MDBContainer className="py-4">
