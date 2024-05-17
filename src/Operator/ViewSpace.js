@@ -93,6 +93,60 @@ useEffect(() => {
 }, [user]);
 
 useEffect(() => {
+  let fetchedSlotData = new Map();
+  // Fetch slot data
+  const fetchSlotData = async () => {
+    const slotDataQuery = query(collection(db, 'slot', user.managementName, 'slotData'));
+    const slotDataSnapshot = await getDocs(slotDataQuery);
+    slotDataSnapshot.forEach((doc) => {
+      fetchedSlotData.set(doc.id, { ...doc.data(), occupied: doc.data().status === 'Occupied' });
+    });
+  };
+
+  const updateSlots = () => {
+    setSlotSets(currentSlotSets =>
+      currentSlotSets.map(slotSet => {
+       
+        const floorOrZone = slotSet.title.replace(/\s+/g, '_'); 
+        return {
+          ...slotSet,
+          slots: slotSet.slots.map((slot, index) => {
+            
+            const slotId1 = `slot_${slotSet.title}_${index}`;
+            const slotId = floorOrZone === 'General_Parking'
+              ? `General Parking_${index + 1}` 
+              : `${floorOrZone}_${slot.slotNumber || index + 3}`; 
+            const slotData = fetchedSlotData.get(slotId1);
+            const isOccupied = (slotData && slotData.occupied);
+            return {
+              ...slot,
+              occupied: isOccupied,
+              userDetails: isOccupied
+                ? { 
+                    // Show carPlateNumber from resData if available, otherwise from slotData
+                    carPlateNumber: slotData?.userDetails?.carPlateNumber
+                  }
+                : undefined,
+            };
+          }),
+        };
+      })
+    );
+  };
+
+  
+  const fetchDataAndUpdateSlots = async () => {
+    await fetchSlotData();
+    updateSlots();
+  };
+
+  // Run the async function
+  fetchDataAndUpdateSlots();
+
+}, [db, user.managementName]);
+
+
+useEffect(() => {
   const managementName = user?.managementName;
   if (managementName) {
     const savedSlots = loadSlotsFromLocalStorage(managementName);
@@ -121,7 +175,7 @@ const fetchData = async (managementName) => {
     const occupiedSlots = new Map();
     slotsSnapshot.forEach(doc => {
       const data = doc.data();
-      occupiedSlots.set(doc.id, data); // Ensure the id is used correctly
+      occupiedSlots.set(doc.id, data);
     });
 
     const establishmentRef = collection(db, 'establishments');
@@ -132,11 +186,13 @@ const fetchData = async (managementName) => {
       const establishmentData = establishmentSnapshot.docs[0].data();
       let newSlotSets = [];
 
-      if (Array.isArray(establishmentData.floorDetails)) {
+      // Check if floorDetails exist and handle them accordingly
+      if (establishmentData.floorDetails && establishmentData.floorDetails.length > 0) {
+        // Floor details provided as an array
         newSlotSets = establishmentData.floorDetails.map(floor => ({
           title: floor.floorName,
           slots: Array.from({ length: parseInt(floor.parkingLots) }, (_, i) => {
-            const slotKey = `slot_${floor.floorName}_${i}`; // Adjusted to match your Firestore keys
+            const slotKey = `slot_${floor.floorName}_${i}`;
             const slotData = occupiedSlots.get(slotKey);
             return {
               id: i,
@@ -145,6 +201,20 @@ const fetchData = async (managementName) => {
             };
           }),
         }));
+      } else if (establishmentData.totalSlots) {
+        // Only totalSlots provided, create a single generic floor
+        newSlotSets = [{
+          title: 'General Parking',
+          slots: Array.from({ length: parseInt(establishmentData.totalSlots) }, (_, i) => {
+            const slotKey = `slot_General_${i}`;
+            const slotData = occupiedSlots.get(slotKey);
+            return {
+              id: i,
+              occupied: !!slotData,
+              userDetails: slotData ? slotData.userDetails : null
+            };
+          }),
+        }];
       }
 
       setSlotSets(newSlotSets);
@@ -158,6 +228,7 @@ const fetchData = async (managementName) => {
     setIsLoading(false);
   }
 };
+
 
   
   useEffect(() => {

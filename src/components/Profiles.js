@@ -232,9 +232,7 @@ export default function EditButton() {
                     <ul>
                         <li><a href="Dashboard"><i class="fas fa-home"></i>Home</a></li>
                         <li><a href='AgentRegistration'><i class="fas fa-user"></i>Account Management</a></li>
-                        <li><a href='TicketInfo'><i class="fas fa-address-card"></i>Ticket Management</a></li>
                         <li><a href='Tracks'><i class="fas fa-project-diagram"></i>Management Details</a></li>
-                        <li><a href="AgentSchedule"><i class="fas fa-blog"></i>Schedule Management</a></li>
                         <li><a href="Profiles"><i class="fas fa-blog"></i>Profile</a></li>
                         <li><a href="Feedback"><i class="fas fa-blog"></i>Feedback</a></li>
                         <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
@@ -303,31 +301,8 @@ export default function EditButton() {
                 </MDBCardBody>
             </MDBCard>
         </MDBCol>
-        <MDBCol lg="4" style={{marginTop: '-5vh'}}>
-            <div className="row mt-5">
-                <h1 style={{ color: "black", fontSize: "30px" }}> Company Parking Lot </h1>
-            </div>
-            <hr style={{ marginTop: "30px", marginBottom: "35px", border: "none" }} />
-
-            <MDBRow className="g-2">
-    <MDBCol className="mb-2">
-        <MDBCardImage src="https://static-ph.lamudi.com/static/media/bm9uZS9ub25l/2x2x2x380x244/7e83cd57260dee.jpg" alt="image 1" style={{ width: "100%", height: "auto", borderRadius: "10px", animation: "fadeIn 1s ease-in-out", transition: "transform 0.3s ease", ":hover": { transform: "scale(1.05)" } }} />
-    </MDBCol>
-    <MDBCol className="mb-2">
-        <MDBCardImage src="https://static-ph.lamudi.com/static/media/bm9uZS9ub25l/2x2x5x880x396/54e6e09d3e6e1a.jpg" alt="image 1" style={{ width: "100%", height: "auto", borderRadius: "10px", animation: "fadeIn 1s ease-in-out", transition: "transform 0.3s ease", ":hover": { transform: "scale(1.05)" } }} />
-    </MDBCol>
-</MDBRow>
-<MDBRow className="g-2">
-    <MDBCol className="mb-2">
-        <MDBCardImage src="https://www.apartmentguide.com/blog/wp-content/uploads/2019/10/parking_garage_HERO.jpg" alt="image 1" style={{ width: "100%", height: "auto", borderRadius: "10px", animation: "fadeIn 1s ease-in-out", transition: "transform 0.3s ease", ":hover": { transform: "scale(1.05)" } }} />
-    </MDBCol>
-    <MDBCol className="mb-2">
-        <MDBCardImage src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_pn4I4ZoKpjQEPxu-qmz_Db7y-jZrbNLFdAWdsG3-GUcCw-XW9SESLsm-VkkNBLy7KFI&usqp=CAU" alt="image 1" style={{ width: "100%", height: "100%", borderRadius: "10px", animation: "fadeIn 1s ease-in-out", transition: "transform 0.3s ease", ":hover": { transform: "scale(1.05)" } }} />
-    </MDBCol>
-</MDBRow>
-        </MDBCol>
     </MDBRow>
-</MDBContainer>;
+</MDBContainer>
             </div>
         </section>
     );

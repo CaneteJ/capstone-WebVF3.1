@@ -179,9 +179,8 @@ const App = () => {
                    <ul>
                        <li><a href="Dashboard"><i class="fas fa-home"></i>Home</a></li>
                        <li><a href='AgentRegistration'><i class="fas fa-user"></i>Account Management</a></li>
-                       <li><a href='TicketInfo'><i class="fas fa-address-card"></i>Ticket Management</a></li>
                        <li><a href='Tracks'><i class="fas fa-project-diagram"></i>Management Details</a></li>
-                       <li><a href="AgentSchedule"><i class="fas fa-blog"></i>Schedule Management</a></li>
+
                        <li><a href="Profiles"><i class="fas fa-blog"></i>Profile</a></li>
                        <li><a href="Feedback"><i class="fas fa-blog"></i>Feedback</a></li>
                        <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
@@ -198,115 +197,130 @@ const App = () => {
 </div>
 </nav>
 </div>
-       
 
-<MDBContainer className="py-5 d-flex justify-content-center align-items-center" style={{ maxWidth: '100vh'}}>
-<MDBCard className="p-4 shadow">
-        <h2 className="mb-4 text-center">Management Details Page</h2>
-        <MDBRow className="mb-4 justify-content-center">
-            <MDBCol xs={6} md={4}>
-                <div className="text-center mb-4">
-                    <img src="coins.png" alt="Revenue" className="img-fluid mb-2" style={{ height: '80px' }} />
-                    <Button onClick={handleShowAccountingPage} color="info" className="btn-block">Show Revenue</Button>
-                </div>
-            </MDBCol>
-            <MDBCol xs={6} md={4}>
-                <div className="text-center mb-4">
-                    <img src="customer.jpg" alt="Customers" className="img-fluid mb-2" style={{ height: '80px' }} />
-                    <Button onClick={handleShowCustomer} color="info" className="btn-block">Show Customer Details</Button>
-                </div>
-            </MDBCol>
-            <MDBCol xs={6} md={4}>
-                <div className="text-center mb-4">
-                    <img src="agent.jpg" alt="Agents" className="img-fluid mb-2" style={{ height: '80px' }} />
-                    <Button onClick={handleSchedule} color="info" className="btn-block">Show Agent Schedule</Button>
-                </div>
-            </MDBCol>
-        </MDBRow>
-        {showAccountingPage && (
-            <div>
-                <h3 className="text-center mb-4"><i className="fas fa-dollar-sign"></i> Revenue Details</h3>
-                <Table striped bordered hover responsive className="text-center">
-                    <thead className="bg-dark text-white">
-                        <tr>
-                            <th>Customer Email</th>
-                            <th>Date</th>
-                            <th>Description</th>
-                            <th>Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {parkingLogs.map((log) => (
-                            <tr key={log.id}>
-                                <td>{log.email}</td>
-                                <td>
-                                    <p className="text-success">Time in: {log.timeIn && new Date(log.timeIn.seconds * 1000).toLocaleString()}</p>
-                                    <p className="text-danger">Time out: {log.timeOut && new Date(log.timeOut.seconds * 1000).toLocaleString()}</p>
-                                </td>
-                                <td>{log.name} - {log.paymentStatus}</td>
-                                <td>{log.user.parkingPay}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </Table>
+
+<MDBContainer style={{marginTop: '15vh'}}>
+            <h2 style={{fontSize: 50, margin: 'auto'}}>Management Details Page</h2>
+            <hr className="divider" style={{Color: '#132B4B'}} />
+            <MDBRow className="mb-4 justify-content-center">
+                <MDBCol xs={12} md={4} className="mb-4">
+                <div className="text-center py-4">
+                <img 
+                    src="coins.png" 
+                    alt="Revenue" 
+                    className="img-fluid mb-3" 
+                    style={{ height: '90px', borderRadius: '8px' }} />
+                <Button 
+                    onClick={handleShowAccountingPage} 
+                    variant="info" 
+                    className="btn-block btn-lg" 
+                    style={{ boxShadow: '0 4px 8px rgba(0,0,0,0.2)' }}>
+                    Show Revenue
+                </Button>
             </div>
-        )}
-        {showCustomer && (
-            <div>
-                <h3 className="text-center mb-4"><i className="fas fa-users"></i> Customer Details</h3>
-                <Table striped bordered hover responsive className="text-center">
-                    <thead className="bg-primary text-white">
-                        <tr>
-                            <th>Customer Email</th>
-                            <th>Name</th>
-                            <th>Vehicle</th>
-                            <th>Vehicle Plate Number</th>
-                            <th>Time in</th>
-                            <th>Time out</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {parkingLogs.map((log) => (
-                            <tr key={log.id}>
-                                <td>{log.email}</td>
-                                <td>{log.name}</td>
-                                <td>{log.car}</td>
-                                <td>{log.carPlateNumber}</td>
-                                <td>{new Date(log.timeIn.seconds * 1000).toLocaleString()}</td>
-                                <td>{new Date(log.timeOut.seconds * 1000).toLocaleString()}</td>
+                </MDBCol>
+                <MDBCol xs={12} md={4} className="mb-4">
+                    <div className="text-center">
+                    <div className="text-center py-4">
+                    <img src="customer.jpg" alt="Customers" className="img-fluid mb-3" style={{ height: '80px' }} />
+                        <Button 
+                            onClick={handleShowCustomer}
+                            variant="info" 
+                            className="btn-block btn-lg" 
+                            style={{ boxShadow: '0 4px 8px rgba(0,0,0,0.2)' }}>
+                            Show Revenue
+                        </Button>
+                    </div> 
+                    </div>
+                </MDBCol>
+            </MDBRow>
+           
+            <hr className="divider" />
+            {showAccountingPage && (
+                <div>
+                    <h3 className="text-center mb-4"><i className="fas fa-dollar-sign"></i> Revenue Details</h3>
+                    <Table striped bordered hover responsive className="text-center">
+                        <thead className="bg-dark text-white">
+                            <tr>
+                                <th>Customer Email</th>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Amount</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </Table>
-            </div>
-        )}
-        {showSchedule && (
-            <div>
-                <h3 className="text-center mb-4"><i className="fas fa-calendar-alt"></i> Agent Schedule Details</h3>
-                <Table striped bordered hover responsive className="text-center">
-                    <thead className="bg-success text-white">
-                        <tr>
-                            <th>Agent Name</th>
-                            <th>Email Address</th>
-                            <th>Time in</th>
-                            <th>Time out</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {scheduleData.map((row) => (
-                            <tr key={row.id}>
-                                <td>{row.name}</td>
-                                <td>{row.email}</td>
-                                <td>{row.timeIn}</td>
-                                <td>{row.timeOut}</td>
+                        </thead>
+                        <tbody>
+                            {parkingLogs.map((log) => (
+                                <tr key={log.id}>
+                                    <td>{log.email}</td>
+                                    <td>
+                                        <p className="text-success">Time in: {log.timeIn && new Date(log.timeIn.seconds * 1000).toLocaleString()}</p>
+                                        <p className="text-danger">Time out: {log.timeOut && new Date(log.timeOut.seconds * 1000).toLocaleString()}</p>
+                                    </td>
+                                    <td>{log.name} - {log.paymentStatus}</td>
+                                    <td>{log.user.parkingPay}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                </div>
+            )}
+
+            {showCustomer && (
+                <div>
+                    <h3 className="text-center mb-4"><i className="fas fa-users"></i> Customer Details</h3>
+                    <Table striped bordered hover responsive className="text-center">
+                        <thead className="bg-primary text-white">
+                            <tr>
+                                <th>Customer Email</th>
+                                <th>Name</th>
+                                <th>Vehicle</th>
+                                <th>Vehicle Plate Number</th>
+                                <th>Time in</th>
+                                <th>Time out</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </Table>
-            </div>
-        )}
-    </MDBCard>
-</MDBContainer>
+                        </thead>
+                        <tbody>
+                            {parkingLogs.map((log) => (
+                                <tr key={log.id}>
+                                    <td>{log.email}</td>
+                                    <td>{log.name}</td>
+                                    <td>{log.car}</td>
+                                    <td>{log.carPlateNumber}</td>
+                                    <td>{new Date(log.timeIn.seconds * 1000).toLocaleString()}</td>
+                                    <td>{new Date(log.timeOut.seconds * 1000).toLocaleString()}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                </div>
+            )}
+
+            {showSchedule && (
+                <div>
+                    <h3 className="text-center mb-4"><i className="fas fa-calendar-alt"></i> Agent Schedule Details</h3>
+                    <Table striped bordered hover responsive className="text-center">
+                        <thead className="bg-success text-white">
+                            <tr>
+                                <th>Agent Name</th>
+                                <th>Email Address</th>
+                                <th>Time in</th>
+                                <th>Time out</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {scheduleData.map((row) => (
+                                <tr key={row.id}>
+                                    <td>{row.name}</td>
+                                    <td>{row.email}</td>
+                                    <td>{row.timeIn}</td>
+                                    <td>{row.timeOut}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                </div>
+            )}
+        </MDBContainer>
             </div>
         </section>
     );

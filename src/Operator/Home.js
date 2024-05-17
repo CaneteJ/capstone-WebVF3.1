@@ -150,7 +150,7 @@ function Home() {
               <div className="col-md-3">
                 <Card> 
                   <Card.Body>
-                    <Card.Title style={{fontFamily:'Courier New', textAlign:'center'}}> <FontAwesomeIcon icon={faCar} color="green"/> Parking Availability</Card.Title>
+                    <Card.Title style={{fontFamily:'Courier New', textAlign:'center'}}> <FontAwesomeIcon icon={faCar} color="green"/> Total Parking Slots</Card.Title>
                     <Card.Text style={{ textAlign: 'center', margin: '0 auto', fontFamily:'Copperplate', fontSize:'20px' }}>{totalSlots}</Card.Text>
                   </Card.Body>
                 </Card>
@@ -159,7 +159,7 @@ function Home() {
                 <Card>
                   <Card.Body>
                     <Card.Title style={{fontFamily:'Courier New', textAlign:'center'}}><FontAwesomeIcon icon={faFileInvoiceDollar} color="orange"/> Parking Fee </Card.Title>
-                    <Card.Text style={{ textAlign: 'center', margin: '0 auto', fontFamily:'Copperplate', fontSize:'20px' }}>{parkingPay}</Card.Text>
+                    <Card.Text style={{ textAlign: 'center', margin: '0 auto', fontFamily:'Copperplate', fontSize:'20px', height: 10 }}>{parkingPay}</Card.Text>
                   </Card.Body>
                 </Card>
               </div>  

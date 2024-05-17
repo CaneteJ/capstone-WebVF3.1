@@ -176,9 +176,7 @@ const FeedbackPage = () => {
                     <ul>
                         <li><a href="Dashboard"><i class="fas fa-home"></i>Home</a></li>
                         <li><a href='AgentRegistration'><i class="fas fa-user"></i>Account Management</a></li>
-                        <li><a href='TicketInfo'><i class="fas fa-address-card"></i>Ticket Management</a></li>
                         <li><a href='Tracks'><i class="fas fa-project-diagram"></i>Management Details</a></li>
-                        <li><a href="AgentSchedule"><i class="fas fa-blog"></i>Schedule Management</a></li>
                         <li><a href="Profiles"><i class="fas fa-blog"></i>Profile</a></li>
                         <li><a href="Feedback"><i class="fas fa-blog"></i>Feedback</a></li>
                         <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
@@ -195,19 +193,18 @@ const FeedbackPage = () => {
 </div>
 </nav>
 </div>
-                <MDBContainer className="py-4">
+                <MDBContainer >
                     <MDBRow>
                         <MDBCol lg="4">
-                  
                         </MDBCol>
                         <MDBCol lg="8">
                         <MDBCard style={{ maxWidth: "170vh", marginLeft: '-55vh', marginTop: '20vh', height: "70vh"}}>
                                 <MDBCardBody>
-                                    <h1 style={{ textAlign: "center", fontFamily: "Georgina", fontSize: "32px"}}>Customer Feedback</h1>
+                                    <h1 style={{ textAlign: "center", fontSize: "40px"}}>Customer Feedback</h1>
                                     <div style={{ display: "flex" }}>
-                                        <div style={{ ...styles.feedbackContainer, flex: 1}}>
+                                        <div style={{ ...styles.feedbackContainer, flex: 1, width: '130vh', height: '50vh'}}>
                                             <div style={navbarStyle}>
-                                                <div style={logoStyle}>FEEDBACK LIST</div>
+                                                <div style={{fontSize: '20px', fontStyle: 'bold'}}>FEEDBACK LIST</div>
                                             </div>
                                             <ul>
                                                 {pageFeedbackList.map((feedback) => {

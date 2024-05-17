@@ -40,6 +40,7 @@ const Reservation = () => {
             const reservationPromises = querySnapshot.docs.map(async (reservationDoc) => {
                 const slotId = reservationDoc.data().slotId;
                 const userEmail = reservationDoc.data().userEmail;
+                const floorTitle = reservationDoc.data().floorTitle; 
 
                 // Fetch the floor name from the slotData sub-document
                 const slotDocRef = doc(db, "slot", managementName, "slotData", `slot_${slotId}`);
@@ -59,9 +60,10 @@ const Reservation = () => {
                     id: reservationDoc.id,
                     name: reservationDoc.data().name,
                     userName: userData?.name || "N/A", // Add the userName property
-                    plateNumber: userData?.carPlateNumber || "N/A",
+                    carPlateNumber: userData?.carPlateNumber || "N/A",
                     slot: typeof slotId === "string" ? slotId.slice(1) : "N/A",
                     slotId: slotId,
+                    floorTitle,
                     timeOfRequest: new Date(reservationDoc.data().timestamp.seconds * 1000).toLocaleTimeString("en-US", { hour12: true, hour: "numeric", minute: "numeric" }),
                 };
             });
@@ -107,60 +109,46 @@ const Reservation = () => {
     };
 
     const handleReservation = async (accepted, reservationRequest, index) => {
-        const { id, userName, plateNumber, slotId, timeOfRequest } = reservationRequest;
+        const { id, userName, carPlateNumber, slotId, timeOfRequest, floorTitle } = reservationRequest;
         const status = accepted ? "Accepted" : "Declined";
 
-        // Create a log entry for the history
         const logEntry = {
             status,
             name: userName,
-            plateNumber,
+            carPlateNumber,
             slotId,
             timeOfRequest,
         };
 
-        // Update the history log in state and local storage
         setHistoryLog([logEntry, ...historyLog]);
         localStorage.setItem("historyLog", JSON.stringify([logEntry, ...historyLog]));
 
         if (accepted) {
-            const previousSlot = getContinuousSlotNumber(currentSetIndex, index);
-            const uniqueSlotId = `${index}`;
-            const userDetails = {
-                name: userName,
-                plateNumber,
-                slotId,
-            };
-
-            const slotDocRef = doc(db, "res", user.managementName, "resData", `slot_${slotId}`);
-
             try {
-                // Set user details in slotData and mark the slot as occupied
-                await setDoc(
-                    slotDocRef,
-                    {
-                        userDetails,
-                        slotId,
-                        status: "Occupied",
-                        timestamp: new Date(),
-                    },
-                    { merge: true }
-                );
+                console.log(`Floor Title: ${floorTitle}, Slot ID: ${slotId}`); 
+                const slotDocRef = doc(db, "slot", user.managementName, "slotData", `slot_${floorTitle}_${slotId}`);
 
-                // Remove the reservation from the 'reservations' collection
+                await setDoc(slotDocRef, {
+                    userDetails: {
+                        name: userName,
+                        carPlateNumber,
+                        slotId,
+                    },
+                    status: "Occupied",
+                    timestamp: new Date(),
+                }, { merge: true });
+
                 const reservationDocRef = doc(db, "reservations", id);
                 await deleteDoc(reservationDocRef);
 
-                console.log(`Reservation accepted for slot ${slotId} and moved to slotData.`);
-                alert(`Reservation accepted for ${userName} at slot ${slotId}`);
+                console.log(`Reservation accepted for slot ${slotId}.`);
+                alert(`Reservation accepted for ${userName} at slot ${slotId + 1}.`);
             } catch (error) {
                 console.error("Error accepting reservation and updating slotData:", error);
                 alert("Failed to accept the reservation. Please try again.");
             }
         } else {
-            // Code for declining the reservation
             try {
-                // Update the reservation status to 'Declined' in Firebase
                 const reservationDocRef = doc(db, "reservations", id);
                 await setDoc(reservationDocRef, { status: "Declined" }, { merge: true });
 
@@ -172,26 +160,14 @@ const Reservation = () => {
             }
         }
 
-        // Remove the reservation from the list in state (for both accept and decline)
         const updatedRequests = reservationRequests.filter((_, i) => i !== index);
         setReservationRequests(updatedRequests);
 
-        // Update local storage only for accepted reservations
         if (accepted) {
             localStorage.setItem("reservationRequests", JSON.stringify(updatedRequests));
         }
-
-        // Update the selected reservation state if needed
-        setSelectedReservation({
-            status,
-            name: userName,
-            plateNumber,
-            slotId,
-            timeOfRequest,
-        });
     };
-
-
+    
     const [showNotification, setShowNotification] = useState(false);
 
     const HistoryLog = ({ historyLog }) => {
@@ -203,12 +179,41 @@ const Reservation = () => {
         };
     
         return (
-            <div style={{ border: "3px solid #ccc", borderRadius: "8px", padding: "10px", position: "relative", borderColor: '#7abdea', marginTop: '-8vh'}}>
-                <h5 style={{ color: "#003851", textAlign: "left", fontSize: "1.5rem", fontWeight: "bold", marginBottom: "1.5rem" }}>Reservation History</h5>
-                <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap"}}>
+<div style={{
+          border: "3px solid #7abdea",
+          borderRadius: "8px",
+          padding: "10px",
+          marginTop: '-3rem',
+          maxWidth: '70vh',
+          height: '71vh',
+          boxSizing: 'border-box',
+          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+          maxHeight: '100vh',
+          overflowY: 'auto',
+           
+              
+              }}>
+                <h5 style={{ 
+                  color: "#003851", 
+                  textAlign: "left", 
+                  fontSize: "1.5rem", 
+                  fontWeight: "bold", 
+                  marginBottom: "1.5rem",
+               
+                }}>
+                  Reservation History
+                </h5>
+                <hr className="divider" />
+                <div style={{ 
+                  flexDirection: "row", 
+                  justifyContent: "space-between", 
+                  alignItems: "center", 
+                  
+                }}>
+                 <div>
                     <button
                         className="btn btn-primary"
-                        style={{ margin: "5px", width: "150px" }}
+                        style={{ margin: "5px", width: "150px"}}
                         onClick={() => setShowAccepted(!showAccepted)}
                     >
                         {showAccepted ? "Hide Accepted" : "Show Accepted"}
@@ -227,6 +232,8 @@ const Reservation = () => {
                     >
                         Clear History
                     </button>
+                </div>
+                <hr className="divider" />
                 </div>
                 {showAccepted && (
                     <div>
@@ -249,211 +256,11 @@ const Reservation = () => {
                     </div>
                 )}
             </div>
+          
+            
         );
     };
-    
-    useEffect(() => {
-        
-        const fetchEstablishments = async () => {
-            const querySnapshot = await getDocs(collection(db, "establishments"));
-            setEstablishments(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        };
-        fetchEstablishments();
-        const fetchPendingAccounts = async () => {
-            const querySnapshot = await getDocs(query(collection(db, "pendingEstablishments")));
-            setPendingAccounts(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        };
-        fetchPendingAccounts();
-    }, []);
-    useEffect(() => {
-        setSummaryCardsData([
-            { 
-                title: 'Total Parking Spaces', 
-                value: `3 Total Parking Spaces`, // Use totalParkingSpaces from state
-                imgSrc: 'totalPark.png', 
-                cardType: 'total' 
-            },
-            { 
-                title: 'Occupied Spaces', 
-                value: `1 Occupied Spaces`, // Update this dynamically if you have the data
-                imgSrc: 'occupied.png', 
-                cardType: 'occupied' 
-            },
-            { 
-                title: 'Available Spaces', 
-                value: `2 Available Spaces`, // Assuming 1 space occupied, update dynamically
-                imgSrc: 'available.png', 
-                cardType: 'available' 
-            },
-            { 
-                title: 'Reserve Spaces', 
-                value: `0 Reserve Spaces`, // Update this dynamically if you have the data
-                imgSrc: 'reservedP.png', 
-                cardType: 'reserve' 
-            },
-          
-        ]);
-    }, [totalParkingSpaces, pendingAccounts, establishments, parkingSeeker, agent]);  // Add any other dependencies if needed
-    
 
-    const handleCardClick = (cardType) => {
-        console.log(`Card clicked: ${cardType}`);
-        setActiveCard(activeCard === cardType ? '' : cardType);
-    };
-
-    const renderFormBasedOnCardType = () => {
-        let data = [];
-        let headers = [];
-        switch (activeCard) {
-            case 'occupied':
-                data = pendingAccounts || []; // Ensure data is an array
-                headers = ["Email", "Contact Number", "Plate Number", "Slot Number"];
-                return (
-                    <table className="table align-middle mb-0 bg-white">
-                    <thead className="bg-light">
-                        <tr>
-                        <th>Name</th>
-                        <th>Contact Number</th>
-                        <th>Plate Number</th>
-                        <th>Floor</th>
-                        <th>Slot Number</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                        <td>
-                            <div className="d-flex align-items-center">
-                            <img
-                                src="https://mdbootstrap.com/img/new/avatars/8.jpg"
-                                alt=""
-                                style={{ width: '45px', height: '45px' }}
-                                className="rounded-circle"
-                                />
-                            <div className="ms-3">
-                                <p className="fw-bold mb-1">gg</p>
-                                <p className="text-muted mb-0">gg@gmail.com</p>
-                            </div>
-                            </div>
-                        </td>
-                        <td>
-                            <p className="text-muted mb-0">09123456789</p>
-                        </td>
-                        <td>Abc23</td>
-                        <td>
-                            <p className="fw-normal mb-1">First</p>
-                        </td>
-                        <td>1</td>
-                        <td>
-                            <span className="badge badge-success rounded-pill d-inline">Active</span>
-                        </td>
-                        <td>
-                            <button type="button" className="btn btn-link btn-sm btn-rounded">
-                            Edit
-                            </button>
-                        </td>
-                        </tr>
-                    </tbody>
-                    </table>
-                );
-                break;
-            case 'available':
-                data = establishments || []; // Ensure data is an array
-                headers = ["Location", "Slot Number"];
-                return (
-                    <table className="table align-middle mb-0 bg-white">
-                    <thead className="bg-light">
-                        <tr> 
-                        <th>Floor</th>
-                        <th>Slot Number</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                        <td>
-                            <p className="fw-normal mb-1">Second</p>
-                        </td>
-                        <td>1</td>
-                        <td>
-                            <span className="badge badge-success rounded-pill d-inline">Active</span>
-                        </td>
-                        <td>
-                            <button type="button" className="btn btn-link btn-sm btn-rounded">
-                            Edit
-                            </button>
-                        </td>
-                        </tr>
-                        <tr>
-                        <td>
-                            <p className="fw-normal mb-1">Second</p>
-                        </td>
-                        <td>2</td>
-                        <td>
-                            <span className="badge badge-success rounded-pill d-inline">Active</span>
-                        </td>
-                        <td>
-                            <button type="button" className="btn btn-link btn-sm btn-rounded">
-                            Edit
-                            </button>
-                        </td>
-                        </tr>
-                    </tbody>
-                    </table>
-                );
-                break;
-            case 'reserve':
-                data = parkingSeeker || []; // Ensure data is an array
-                headers = ["Email", "Plate Number", "Location", "Slot Number", "Date"];
-                return (
-                    <table className="table align-middle mb-0 bg-white">
-                    <thead className="bg-light">
-                        <tr> 
-                        <th>Email</th>
-                        <th>Plate Number</th>
-                        <th>Location</th>
-                        <th>Slot Number</th>
-                        <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                        <td>
-                            <p className="fw-normal mb-1"></p>
-                        </td>
-                        <td></td>
-                        <td>
-                            <span className="badge badge-success rounded-pill d-inline">Active</span>
-                        </td>
-                        <td>
-                        </td>
-                        <td></td>
-                        <button type="button" className="btn btn-link btn-sm btn-rounded">
-                            Edit
-                            </button>
-                        </tr>
-                        <tr>
-                        <td>
-                            <p className="fw-normal mb-1"></p>
-                        </td>
-                        <td></td>
-                        <td>
-                            <span className="badge badge-success rounded-pill d-inline">Active</span>
-                        </td>
-                        <td>
-                        </td>
-                        <td></td>
-                        <td>
-                        <button type="button" className="btn btn-link btn-sm btn-rounded">
-                            Edit
-                            </button>
-                        </td>
-                        </tr>
-                    </tbody>
-                    </table>
-                );
-                break;
-        }
-    }
-    
     const ReservationRequest = ({ request, index }) => {
         const [showMapModal, setShowMapModal] = useState(false);
       
@@ -468,6 +275,7 @@ const Reservation = () => {
               <div className="p-2"><strong>Name</strong></div>
               <div className="p-2"><strong>Time of Request</strong></div>
               <div className="p-2"><strong>Plate Number</strong></div>
+              <div className="p-2"><strong>Floor</strong></div>
               <div className="p-2"><strong>Slot Number</strong></div>
             </div>
       
@@ -475,8 +283,9 @@ const Reservation = () => {
             <div className="d-flex justify-content-between mb-2">
               <div className="p-2">{request.userName}</div>
               <div className="p-2">{request.timeOfRequest}</div>
-              <div className="p-2">{request.plateNumber}</div>
-              <div className="p-2">{request.slotId}</div>
+              <div className="p-2">{request.carPlateNumber}</div>
+              <div className="p-2">{request.floorTitle}</div>
+              <div className="p-2">{request.slotId + 1}</div>
             </div>
       
             {/* MA CLICK NGA ICON SA MAP */}
@@ -541,23 +350,7 @@ const Reservation = () => {
             </button>
         </div>
     </div>
-</nav>
-<div className="main-content">
-                        <div className="summary-cards">
-                            {summaryCardsData.map(card => (
-                                <div key={card.title} className={`card card-${card.cardType}`} onClick={() => handleCardClick(card.cardType)}>
-                                    <img src={card.imgSrc} alt={card.title} className="card-image" />
-                                    <div className="card-content">
-                                        <div className="card-title">{card.title}</div>
-                                        <div className="card-value">{card.value}</div>
-                                    </div>    
-                                </div>
-                            ))}
-                        </div>
-                        </div>
-                        {renderFormBasedOnCardType()}     
-                        <hr className="divider" />
-                          
+</nav>                    
                 <MDBContainer className="py-4">
                     <MDBRow>
                         <MDBCol lg="4">
@@ -567,26 +360,34 @@ const Reservation = () => {
                         <MDBCol lg="4">
                     <div >
                    
-  <h3 style={{
+                    <h3 style={{
     color: "#003851",
     textAlign: "center",
     fontSize: "1.5rem",        // Keep rem for scalable font size
     fontWeight: "bold",
     marginBottom: "1.5rem",  // Use rem to maintain scalable spacing
-    marginLeft: '-60vh',         // Avoid negative margins that cause overflow
+    marginLeft: '-50vh',         // Avoid negative margins that cause overflow
     marginTop: '0'           // Adjust this to suit your layout needs
   }}>
     Parking Reservation Management
   </h3>
+
   
   <div style={{
-  width: "100%",           // Use percentage to make the width responsive
-  height: "40vh",          // Use vh for a responsive height based on the viewport
+  width: "80vh",            // Use vh for a responsive width based on the viewport height
+  height: "70vh",           // Use vh for a responsive height based on the viewport
   overflowY: "scroll",
-  padding: "1rem",         // Use rem for padding to scale with the font size
+  padding: "1rem",          // Use rem for padding to scale with the font size
   background: "#132B4B",
-  marginLeft: '-30vh',         // Explicitly set marginLeft to 0 to ensure it aligns left
+  borderWidth: 3,
+  borderRadius: 5,
+  marginLeft: '-10rem',
+  borderStyle: 'solid',
+  borderColor: '#7abdea',
+  boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)", // Add a subtle shadow
 }}>
+ 
+
  
                         {reservationRequests.length === 0 ? (
                             <p>No reservation</p>
@@ -606,7 +407,7 @@ const Reservation = () => {
 
                 </MDBCol>
                 <MDBCol lg="4">
-                    <nav style={{ backgroundColor: "white", marginRight: '-50%', marginLeft: 'auto', borderWidth: 1, borderColor: "#003851", marginTop: '26%'}}>
+                    <nav style={{ backgroundColor: "white", marginRight: 'auto', marginLeft: 'auto', borderWidth: 1, borderColor: "#003851", marginTop: '26%'}}>
                     <HistoryLog historyLog={historyLog} />
                     </nav>
                     </MDBCol>
