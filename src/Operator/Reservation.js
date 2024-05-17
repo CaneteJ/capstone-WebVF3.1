@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { collection, query, where, getDocs, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "../config/firebase";
 import { MDBCol, MDBContainer, MDBRow, MDBCard, MDBCardText, MDBCardBody, MDBCardImage, MDBListGroup, MDBListGroupItem } from "mdb-react-ui-kit";
@@ -30,6 +30,19 @@ const Reservation = () => {
     const [summaryCardsData, setSummaryCardsData] = useState([]);
     const [agent, setAgent] = useState([]);    
 
+    useEffect(() => {
+        const unsubscribe = onSnapshot(collection(db, 'notifications'), (snapshot) => {
+          snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") {
+              const notification = change.doc.data();
+              console.log("New notification: ", notification);
+              // Display the notification on your web app
+            }
+          });
+        });
+    
+        return () => unsubscribe();
+      }, []);
 
 
     const fetchReservations = async (managementName) => {
@@ -40,6 +53,7 @@ const Reservation = () => {
             const reservationPromises = querySnapshot.docs.map(async (reservationDoc) => {
                 const slotId = reservationDoc.data().slotId;
                 const userEmail = reservationDoc.data().userEmail;
+                const floorTitle = reservationDoc.data().floorTitle; 
 
                 // Fetch the floor name from the slotData sub-document
                 const slotDocRef = doc(db, "slot", managementName, "slotData", `slot_${slotId}`);
@@ -59,9 +73,10 @@ const Reservation = () => {
                     id: reservationDoc.id,
                     name: reservationDoc.data().name,
                     userName: userData?.name || "N/A", // Add the userName property
-                    plateNumber: userData?.carPlateNumber || "N/A",
+                    carPlateNumber: userData?.carPlateNumber || "N/A",
                     slot: typeof slotId === "string" ? slotId.slice(1) : "N/A",
                     slotId: slotId,
+                    floorTitle,
                     timeOfRequest: new Date(reservationDoc.data().timestamp.seconds * 1000).toLocaleTimeString("en-US", { hour12: true, hour: "numeric", minute: "numeric" }),
                 };
             });
@@ -107,91 +122,96 @@ const Reservation = () => {
     };
 
     const handleReservation = async (accepted, reservationRequest, index) => {
-        const { id, userName, plateNumber, slotId, timeOfRequest } = reservationRequest;
+        const { id, userName, carPlateNumber, slotId, timeOfRequest, floorTitle, userToken, userEmail } = reservationRequest;
         const status = accepted ? "Accepted" : "Declined";
-
-        // Create a log entry for the history
+    
         const logEntry = {
             status,
             name: userName,
-            plateNumber,
+            carPlateNumber,
             slotId,
             timeOfRequest,
+            email: userEmail || 'N/A', // Ensure email is not undefined
         };
-
-        // Update the history log in state and local storage
+    
         setHistoryLog([logEntry, ...historyLog]);
         localStorage.setItem("historyLog", JSON.stringify([logEntry, ...historyLog]));
-
+    
         if (accepted) {
-            const previousSlot = getContinuousSlotNumber(currentSetIndex, index);
-            const uniqueSlotId = `${index}`;
-            const userDetails = {
-                name: userName,
-                plateNumber,
-                slotId,
-            };
-
-            const slotDocRef = doc(db, "res", user.managementName, "resData", `slot_${slotId}`);
-
             try {
-                // Set user details in slotData and mark the slot as occupied
-                await setDoc(
-                    slotDocRef,
-                    {
-                        userDetails,
+                console.log(`Floor Title: ${floorTitle}, Slot ID: ${slotId}`); 
+                const slotDocRef = doc(db, "slot", user.managementName, "slotData", `slot_${floorTitle}_${slotId}`);
+    
+                await setDoc(slotDocRef, {
+                    userDetails: {
+                        name: userName,
+                        carPlateNumber,
                         slotId,
-                        status: "Occupied",
-                        timestamp: new Date(),
+                        floorTitle,
                     },
-                    { merge: true }
-                );
-
-                // Remove the reservation from the 'reservations' collection
+                    from: "Reservation",
+                    status: "Occupied",
+                    timestamp: new Date(),
+                }, { merge: true });
+    
                 const reservationDocRef = doc(db, "reservations", id);
                 await deleteDoc(reservationDocRef);
-
-                console.log(`Reservation accepted for slot ${slotId} and moved to slotData.`);
-                alert(`Reservation accepted for ${userName} at slot ${slotId}`);
+    
+                console.log(`Reservation accepted for slot ${slotId}.`);
+                alert(`Reservation accepted for ${userName} at slot ${slotId + 1}.`);
+    
+                // Add a new document to the resStatus collection
+                const resStatusDocRef = doc(collection(db, "resStatus"));
+                await setDoc(resStatusDocRef, {
+                    userName,
+                    userEmail: userEmail || 'N/A', // Ensure email is not undefined
+                    carPlateNumber,
+                    slotId,
+                    floorTitle,
+                    status: "Occupied",
+                    timestamp: new Date(),
+                    resStatus: "Accepted",
+                    managementName: user.managementName,
+                }, { merge: true });
+    
             } catch (error) {
                 console.error("Error accepting reservation and updating slotData:", error);
                 alert("Failed to accept the reservation. Please try again.");
             }
         } else {
-            // Code for declining the reservation
             try {
-                // Update the reservation status to 'Declined' in Firebase
                 const reservationDocRef = doc(db, "reservations", id);
                 await setDoc(reservationDocRef, { status: "Declined" }, { merge: true });
-
+    
                 console.log(`Reservation declined for ${userName}.`);
                 alert(`Reservation declined for ${userName}.`);
+    
+                const resStatusDocRef = doc(collection(db, "resStatus"));
+                await setDoc(resStatusDocRef, {
+                    userName,
+                    userEmail: userEmail || 'N/A', // Ensure email is not undefined
+                    carPlateNumber,
+                    slotId,
+                    floorTitle,
+                    status: "Occupied",
+                    timestamp: new Date(),
+                    resStatus: "Declined",
+                    managementName: user.managementName,
+                });
             } catch (error) {
                 console.error("Error updating reservation status:", error);
                 alert("Failed to update the reservation status. Please try again.");
             }
         }
-
-        // Remove the reservation from the list in state (for both accept and decline)
+    
         const updatedRequests = reservationRequests.filter((_, i) => i !== index);
         setReservationRequests(updatedRequests);
-
-        // Update local storage only for accepted reservations
+    
         if (accepted) {
             localStorage.setItem("reservationRequests", JSON.stringify(updatedRequests));
         }
-
-        // Update the selected reservation state if needed
-        setSelectedReservation({
-            status,
-            name: userName,
-            plateNumber,
-            slotId,
-            timeOfRequest,
-        });
     };
-
-
+    
     const [showNotification, setShowNotification] = useState(false);
 
     const HistoryLog = ({ historyLog }) => {
@@ -468,6 +488,7 @@ const Reservation = () => {
               <div className="p-2"><strong>Name</strong></div>
               <div className="p-2"><strong>Time of Request</strong></div>
               <div className="p-2"><strong>Plate Number</strong></div>
+              <div className="p-2"><strong>Floor</strong></div>
               <div className="p-2"><strong>Slot Number</strong></div>
             </div>
       
@@ -475,8 +496,9 @@ const Reservation = () => {
             <div className="d-flex justify-content-between mb-2">
               <div className="p-2">{request.userName}</div>
               <div className="p-2">{request.timeOfRequest}</div>
-              <div className="p-2">{request.plateNumber}</div>
-              <div className="p-2">{request.slotId}</div>
+              <div className="p-2">{request.carPlateNumber}</div>
+              <div className="p-2">{request.floorTitle}</div>
+              <div className="p-2">{request.slotId + 1}</div>
             </div>
       
             {/* MA CLICK NGA ICON SA MAP */}
@@ -533,13 +555,6 @@ const Reservation = () => {
         <a className="navbar-brand" style={{padding: 35}}>
             
         </a>
-        <div>
-            <button className="btn" onClick={() => setShowNotification(!showNotification)} style={{ color: 'white', border: 'none', background: 'none' }}>
-                <FontAwesomeIcon icon={faBell} size="lg" />
-                {/* Optionally display a badge with notification count */}
-                {showNotification && <span className="badge rounded-pill bg-danger">3</span>}
-            </button>
-        </div>
     </div>
 </nav>
 <div className="main-content">
