@@ -7,6 +7,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  onSnapshot,
   deleteDoc,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
@@ -31,36 +32,49 @@ import Button from "react-bootstrap/Button";
 import MapComponent from "../components/Map";
 
 const Reservation = () => {
-  const { user } = useContext(UserContext);
-  const [reservationRequests, setReservationRequests] = useState([]);
-  const [historyLog, setHistoryLog] = useState([]);
-  const [selectedReservation, setSelectedReservation] = useState(null);
-  const [userNames, setUserNames] = useState({});
-  const [selectedSlotIndex, setSelectedSlotIndex] = useState(null);
-  const [currentSetIndex, setCurrentSetIndex] = useState(0);
-  const [slotSets, setSlotSets] = useState([]);
-  const [totalParkingSpaces, setTotalParkingSpaces] = useState(0);
-  const [occupiedSpaces, setOccupiedSpaces] = useState(0);
-  const [availableSpaces, setAvailableSpaces] = useState(0);
-  const [activeCard, setActiveCard] = useState("");
-  const [pendingAccounts, setPendingAccounts] = useState([]);
-  const [establishments, setEstablishments] = useState([]);
-  const [parkingSeeker, setParkingSeeker] = useState([]);
-  const [summaryCardsData, setSummaryCardsData] = useState([]);
-  const [agent, setAgent] = useState([]);
 
-  const fetchReservations = async (managementName) => {
-    console.log("Fetching reservations for managementName:", managementName);
-    const q = query(
-      collection(db, "reservations"),
-      where("managementName", "==", managementName)
-    );
-    try {
-      const querySnapshot = await getDocs(q);
-      const reservationPromises = querySnapshot.docs.map(
-        async (reservationDoc) => {
-          const slotId = reservationDoc.data().slotId;
-          const userEmail = reservationDoc.data().userEmail;
+    const { user } = useContext(UserContext);
+    const [reservationRequests, setReservationRequests] = useState([]);
+    const [historyLog, setHistoryLog] = useState([]);
+    const [selectedReservation, setSelectedReservation] = useState(null);
+    const [userNames, setUserNames] = useState({});
+    const [selectedSlotIndex, setSelectedSlotIndex] = useState(null);
+    const [currentSetIndex, setCurrentSetIndex] = useState(0);
+    const [slotSets, setSlotSets] = useState([]);
+    const [totalParkingSpaces, setTotalParkingSpaces] = useState(0);
+    const [occupiedSpaces, setOccupiedSpaces] = useState(0);
+    const [availableSpaces, setAvailableSpaces] = useState(0);
+    const [activeCard, setActiveCard] = useState('');
+    const [pendingAccounts, setPendingAccounts] = useState([]);
+    const [establishments, setEstablishments] = useState([]);
+    const [parkingSeeker, setParkingSeeker] = useState([]);
+    const [summaryCardsData, setSummaryCardsData] = useState([]);
+    const [agent, setAgent] = useState([]);    
+
+    useEffect(() => {
+        const unsubscribe = onSnapshot(collection(db, 'notifications'), (snapshot) => {
+          snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") {
+              const notification = change.doc.data();
+              console.log("New notification: ", notification);
+              // Display the notification on your web app
+            }
+          });
+        });
+    
+        return () => unsubscribe();
+      }, []);
+
+
+    const fetchReservations = async (managementName) => {
+        console.log("Fetching reservations for managementName:", managementName);
+        const q = query(collection(db, "reservations"), where("managementName", "==", managementName));
+        try {
+            const querySnapshot = await getDocs(q);
+            const reservationPromises = querySnapshot.docs.map(async (reservationDoc) => {
+                const slotId = reservationDoc.data().slotId;
+                const userEmail = reservationDoc.data().userEmail;
+                const floorTitle = reservationDoc.data().floorTitle; 
 
           // Fetch the floor name from the slotData sub-document
           const slotDocRef = doc(
@@ -90,9 +104,10 @@ const Reservation = () => {
             name: reservationDoc.data().name,
             location: reservationDoc.data().currentLocation,
             userName: userData?.name || "N/A", // Add the userName property
-            plateNumber: userData?.carPlateNumber || "N/A",
+            carPlateNumber: userData?.carPlateNumber || "N/A",
             slot: typeof slotId === "string" ? slotId.slice(1) : "N/A",
             slotId: slotId,
+                    floorTitle,
             timeOfRequest: new Date(
               reservationDoc.data().timestamp.seconds * 1000
             ).toLocaleTimeString("en-US", {
@@ -147,114 +162,98 @@ const Reservation = () => {
     return previousSlots + index + 1;
   };
 
-  const handleReservation = async (accepted, reservationRequest, index) => {
-    const { id, userName, plateNumber, slotId, timeOfRequest } =
-      reservationRequest;
-    const status = accepted ? "Accepted" : "Declined";
-
-    // Create a log entry for the history
-    const logEntry = {
-      status,
-      name: userName,
-      plateNumber,
-      slotId,
-      timeOfRequest,
-    };
-
-    // Update the history log in state and local storage
-    setHistoryLog([logEntry, ...historyLog]);
-    localStorage.setItem(
-      "historyLog",
-      JSON.stringify([logEntry, ...historyLog])
-    );
-
-    if (accepted) {
-      const previousSlot = getContinuousSlotNumber(currentSetIndex, index);
-      const uniqueSlotId = `${index}`;
-      const userDetails = {
-        name: userName,
-        plateNumber,
-        slotId,
-      };
-
-      const slotDocRef = doc(
-        db,
-        "res",
-        user.managementName,
-        "resData",
-        `slot_${slotId}`
-      );
-
-      try {
-        // Set user details in slotData and mark the slot as occupied
-        await setDoc(
-          slotDocRef,
-          {
-            userDetails,
+    const handleReservation = async (accepted, reservationRequest, index) => {
+        const { id, userName, carPlateNumber, slotId, timeOfRequest, floorTitle, userToken, userEmail } = reservationRequest;
+        const status = accepted ? "Accepted" : "Declined";
+    
+        const logEntry = {
+            status,
+            name: userName,
+            carPlateNumber,
             slotId,
-            status: "Occupied",
-            timestamp: new Date(),
-          },
-          { merge: true }
-        );
-
-        // Remove the reservation from the 'reservations' collection
-        const reservationDocRef = doc(db, "reservations", id);
-        await deleteDoc(reservationDocRef);
-
-        console.log(
-          `Reservation accepted for slot ${slotId} and moved to slotData.`
-        );
-        alert(`Reservation accepted for ${userName} at slot ${slotId}`);
-      } catch (error) {
-        console.error(
-          "Error accepting reservation and updating slotData:",
-          error
-        );
-        alert("Failed to accept the reservation. Please try again.");
-      }
-    } else {
-      // Code for declining the reservation
-      try {
-        // Update the reservation status to 'Declined' in Firebase
-        const reservationDocRef = doc(db, "reservations", id);
-        await setDoc(
-          reservationDocRef,
-          { status: "Declined" },
-          { merge: true }
-        );
-
-        console.log(`Reservation declined for ${userName}.`);
-        alert(`Reservation declined for ${userName}.`);
-      } catch (error) {
-        console.error("Error updating reservation status:", error);
-        alert("Failed to update the reservation status. Please try again.");
-      }
-    }
-
-    // Remove the reservation from the list in state (for both accept and decline)
-    const updatedRequests = reservationRequests.filter((_, i) => i !== index);
-    setReservationRequests(updatedRequests);
-
-    // Update local storage only for accepted reservations
-    if (accepted) {
-      localStorage.setItem(
-        "reservationRequests",
-        JSON.stringify(updatedRequests)
-      );
-    }
-
-    // Update the selected reservation state if needed
-    setSelectedReservation({
-      status,
-      name: userName,
-      plateNumber,
-      slotId,
-      timeOfRequest,
-    });
-  };
-
-  const [showNotification, setShowNotification] = useState(false);
+            timeOfRequest,
+            email: userEmail || 'N/A', // Ensure email is not undefined
+        };
+    
+        setHistoryLog([logEntry, ...historyLog]);
+        localStorage.setItem("historyLog", JSON.stringify([logEntry, ...historyLog]));
+    
+        if (accepted) {
+            try {
+                console.log(`Floor Title: ${floorTitle}, Slot ID: ${slotId}`); 
+                const slotDocRef = doc(db, "slot", user.managementName, "slotData", `slot_${floorTitle}_${slotId}`);
+    
+                await setDoc(slotDocRef, {
+                    userDetails: {
+                        name: userName,
+                        carPlateNumber,
+                        slotId,
+                        floorTitle,
+                    },
+                    from: "Reservation",
+                    status: "Occupied",
+                    timestamp: new Date(),
+                }, { merge: true });
+    
+                const reservationDocRef = doc(db, "reservations", id);
+                await deleteDoc(reservationDocRef);
+    
+                console.log(`Reservation accepted for slot ${slotId}.`);
+                alert(`Reservation accepted for ${userName} at slot ${slotId + 1}.`);
+    
+                // Add a new document to the resStatus collection
+                const resStatusDocRef = doc(collection(db, "resStatus"));
+                await setDoc(resStatusDocRef, {
+                    userName,
+                    userEmail: userEmail || 'N/A', // Ensure email is not undefined
+                    carPlateNumber,
+                    slotId,
+                    floorTitle,
+                    status: "Occupied",
+                    timestamp: new Date(),
+                    resStatus: "Accepted",
+                    managementName: user.managementName,
+                }, { merge: true });
+    
+            } catch (error) {
+                console.error("Error accepting reservation and updating slotData:", error);
+                alert("Failed to accept the reservation. Please try again.");
+            }
+        } else {
+            try {
+                const reservationDocRef = doc(db, "reservations", id);
+                await setDoc(reservationDocRef, { status: "Declined" }, { merge: true });
+    
+                console.log(`Reservation declined for ${userName}.`);
+                alert(`Reservation declined for ${userName}.`);
+    
+                const resStatusDocRef = doc(collection(db, "resStatus"));
+                await setDoc(resStatusDocRef, {
+                    userName,
+                    userEmail: userEmail || 'N/A', // Ensure email is not undefined
+                    carPlateNumber,
+                    slotId,
+                    floorTitle,
+                    status: "Occupied",
+                    timestamp: new Date(),
+                    resStatus: "Declined",
+                    managementName: user.managementName,
+                });
+            } catch (error) {
+                console.error("Error updating reservation status:", error);
+                alert("Failed to update the reservation status. Please try again.");
+            }
+        }
+    
+        const updatedRequests = reservationRequests.filter((_, i) => i !== index);
+        setReservationRequests(updatedRequests);
+    
+        if (accepted) {
+            localStorage.setItem("reservationRequests", JSON.stringify(updatedRequests));
+        }
+    };
+    
+    const [showNotification, setShowNotification] = useState(false);
 
   const HistoryLog = ({ historyLog }) => {
     const [showAccepted, setShowAccepted] = useState(false);
@@ -409,267 +408,220 @@ const Reservation = () => {
     setActiveCard(activeCard === cardType ? "" : cardType);
   };
 
-  const renderFormBasedOnCardType = () => {
-    let data = [];
-    let headers = [];
-    switch (activeCard) {
-      case "occupied":
-        data = pendingAccounts || []; // Ensure data is an array
-        headers = ["Email", "Contact Number", "Plate Number", "Slot Number"];
-        return (
-          <table className="table align-middle mb-0 bg-white">
-            <thead className="bg-light">
-              <tr>
-                <th>Name</th>
-                <th>Contact Number</th>
-                <th>Plate Number</th>
-                <th>Floor</th>
-                <th>Slot Number</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <div className="d-flex align-items-center">
-                    <img
-                      src="https://mdbootstrap.com/img/new/avatars/8.jpg"
-                      alt=""
-                      style={{ width: "45px", height: "45px" }}
-                      className="rounded-circle"
-                    />
-                    <div className="ms-3">
-                      <p className="fw-bold mb-1">gg</p>
-                      <p className="text-muted mb-0">gg@gmail.com</p>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <p className="text-muted mb-0">09123456789</p>
-                </td>
-                <td>Abc23</td>
-                <td>
-                  <p className="fw-normal mb-1">First</p>
-                </td>
-                <td>1</td>
-                <td>
-                  <span className="badge badge-success rounded-pill d-inline">
-                    Active
-                  </span>
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    className="btn btn-link btn-sm btn-rounded"
-                  >
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        );
-        break;
-      case "available":
-        data = establishments || []; // Ensure data is an array
-        headers = ["Location", "Slot Number"];
-        return (
-          <table className="table align-middle mb-0 bg-white">
-            <thead className="bg-light">
-              <tr>
-                <th>Floor</th>
-                <th>Slot Number</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <p className="fw-normal mb-1">Second</p>
-                </td>
-                <td>1</td>
-                <td>
-                  <span className="badge badge-success rounded-pill d-inline">
-                    Active
-                  </span>
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    className="btn btn-link btn-sm btn-rounded"
-                  >
-                    Edit
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <p className="fw-normal mb-1">Second</p>
-                </td>
-                <td>2</td>
-                <td>
-                  <span className="badge badge-success rounded-pill d-inline">
-                    Active
-                  </span>
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    className="btn btn-link btn-sm btn-rounded"
-                  >
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        );
-        break;
-      case "reserve":
-        data = parkingSeeker || []; // Ensure data is an array
-        headers = ["Email", "Plate Number", "Location", "Slot Number", "Date"];
-        return (
-          <table className="table align-middle mb-0 bg-white">
-            <thead className="bg-light">
-              <tr>
-                <th>Email</th>
-                <th>Plate Number</th>
-                <th>Location</th>
-                <th>Slot Number</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <p className="fw-normal mb-1"></p>
-                </td>
-                <td></td>
-                <td>
-                  <span className="badge badge-success rounded-pill d-inline">
-                    Active
-                  </span>
-                </td>
-                <td></td>
-                <td></td>
-                <button
-                  type="button"
-                  className="btn btn-link btn-sm btn-rounded"
-                >
-                  Edit
-                </button>
-              </tr>
-              <tr>
-                <td>
-                  <p className="fw-normal mb-1"></p>
-                </td>
-                <td></td>
-                <td>
-                  <span className="badge badge-success rounded-pill d-inline">
-                    Active
-                  </span>
-                </td>
-                <td></td>
-                <td></td>
-                <td>
-                  <button
-                    type="button"
-                    className="btn btn-link btn-sm btn-rounded"
-                  >
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        );
-        break;
+    const renderFormBasedOnCardType = () => {
+        let data = [];
+        let headers = [];
+        switch (activeCard) {
+            case 'occupied':
+                data = pendingAccounts || []; // Ensure data is an array
+                headers = ["Email", "Contact Number", "Plate Number", "Slot Number"];
+                return (
+                    <table className="table align-middle mb-0 bg-white">
+                    <thead className="bg-light">
+                        <tr>
+                        <th>Name</th>
+                        <th>Contact Number</th>
+                        <th>Plate Number</th>
+                        <th>Floor</th>
+                        <th>Slot Number</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                        <td>
+                            <div className="d-flex align-items-center">
+                            <img
+                                src="https://mdbootstrap.com/img/new/avatars/8.jpg"
+                                alt=""
+                                style={{ width: '45px', height: '45px' }}
+                                className="rounded-circle"
+                                />
+                            <div className="ms-3">
+                                <p className="fw-bold mb-1">gg</p>
+                                <p className="text-muted mb-0">gg@gmail.com</p>
+                            </div>
+                            </div>
+                        </td>
+                        <td>
+                            <p className="text-muted mb-0">09123456789</p>
+                        </td>
+                        <td>Abc23</td>
+                        <td>
+                            <p className="fw-normal mb-1">First</p>
+                        </td>
+                        <td>1</td>
+                        <td>
+                            <span className="badge badge-success rounded-pill d-inline">Active</span>
+                        </td>
+                        <td>
+                            <button type="button" className="btn btn-link btn-sm btn-rounded">
+                            Edit
+                            </button>
+                        </td>
+                        </tr>
+                    </tbody>
+                    </table>
+                );
+                break;
+            case 'available':
+                data = establishments || []; // Ensure data is an array
+                headers = ["Location", "Slot Number"];
+                return (
+                    <table className="table align-middle mb-0 bg-white">
+                    <thead className="bg-light">
+                        <tr> 
+                        <th>Floor</th>
+                        <th>Slot Number</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                        <td>
+                            <p className="fw-normal mb-1">Second</p>
+                        </td>
+                        <td>1</td>
+                        <td>
+                            <span className="badge badge-success rounded-pill d-inline">Active</span>
+                        </td>
+                        <td>
+                            <button type="button" className="btn btn-link btn-sm btn-rounded">
+                            Edit
+                            </button>
+                        </td>
+                        </tr>
+                        <tr>
+                        <td>
+                            <p className="fw-normal mb-1">Second</p>
+                        </td>
+                        <td>2</td>
+                        <td>
+                            <span className="badge badge-success rounded-pill d-inline">Active</span>
+                        </td>
+                        <td>
+                            <button type="button" className="btn btn-link btn-sm btn-rounded">
+                            Edit
+                            </button>
+                        </td>
+                        </tr>
+                    </tbody>
+                    </table>
+                );
+                break;
+            case 'reserve':
+                data = parkingSeeker || []; // Ensure data is an array
+                headers = ["Email", "Plate Number", "Location", "Slot Number", "Date"];
+                return (
+                    <table className="table align-middle mb-0 bg-white">
+                    <thead className="bg-light">
+                        <tr> 
+                        <th>Email</th>
+                        <th>Plate Number</th>
+                        <th>Location</th>
+                        <th>Slot Number</th>
+                        <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                        <td>
+                            <p className="fw-normal mb-1"></p>
+                        </td>
+                        <td></td>
+                        <td>
+                            <span className="badge badge-success rounded-pill d-inline">Active</span>
+                        </td>
+                        <td>
+                        </td>
+                        <td></td>
+                        <button type="button" className="btn btn-link btn-sm btn-rounded">
+                            Edit
+                            </button>
+                        </tr>
+                        <tr>
+                        <td>
+                            <p className="fw-normal mb-1"></p>
+                        </td>
+                        <td></td>
+                        <td>
+                            <span className="badge badge-success rounded-pill d-inline">Active</span>
+                        </td>
+                        <td>
+                        </td>
+                        <td></td>
+                        <td>
+                        <button type="button" className="btn btn-link btn-sm btn-rounded">
+                            Edit
+                            </button>
+                        </td>
+                        </tr>
+                    </tbody>
+                    </table>
+                );
+                break;
+        }
     }
-  };
-
-  const ReservationRequest = ({ request, index }) => {
-    const [showMapModal, setShowMapModal] = useState(false);
-
-    const toggleMapModal = () => {
-      setShowMapModal(!showMapModal);
-    };
-
-    return (
-      <div
-        className="reservation-request mb-4 border p-3 rounded bg-light"
-        style={{ maxWidth: "800px" }}
-        key={request.plateNumber}
-      >
-        {/* Headers */}
-        <div className="d-flex justify-content-between mb-2 text-muted">
-          <div className="p-2">
-            <strong>Name</strong>
-          </div>
-          <div className="p-2">
-            <strong>Time of Request</strong>
-          </div>
-          <div className="p-2">
-            <strong>Plate Number</strong>
-          </div>
-          <div className="p-2">
-            <strong>Slot Number</strong>
-          </div>
-        </div>
-
-        {/* Details */}
-        <div className="d-flex justify-content-between mb-2">
-          <div className="p-2">{request.userName}</div>
-          <div className="p-2">{request.timeOfRequest}</div>
-          <div className="p-2">{request.plateNumber}</div>
-          <div className="p-2">{request.slotId}</div>
-        </div>
-
-        {/* MA CLICK NGA ICON SA MAP */}
-        <Button variant="primary" onClick={toggleMapModal}>
-          <i className="bi bi-geo-alt"></i> View Map
-        </Button>
-
-        {/* PARA SA MAP*/}
-        <Modal show={showMapModal} onHide={toggleMapModal} centered>
-          <Modal.Header closeButton>
-            <Modal.Title>Map</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            {/* <img
-              src={`https://maps.googleapis.com/maps/api/staticmap?center=${request.latitude},${request.longitude}&zoom=14&size=600x300&maptype=roadmap&markers=color:red%7Clabel:S%7C${request.latitude},${request.longitude}&key=YOUR_API_KEY`}
-              alt="Map"
-              style={{ width: "100%", height: "auto" }}
-            /> */}
-            {request?.location && user.coordinates && (
-              <MapComponent
-                origin={request.location}
-                destination={user.coordinates}
-              />
-            )}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={toggleMapModal}>
-              Close
+    
+    const ReservationRequest = ({ request, index }) => {
+        const [showMapModal, setShowMapModal] = useState(false);
+      
+        const toggleMapModal = () => {
+          setShowMapModal(!showMapModal);
+        };
+      
+        return (
+          <div className="reservation-request mb-4 border p-3 rounded bg-light" style={{ maxWidth: '800px' }} key={request.plateNumber}>
+            {/* Headers */}
+            <div className="d-flex justify-content-between mb-2 text-muted">
+              <div className="p-2"><strong>Name</strong></div>
+              <div className="p-2"><strong>Time of Request</strong></div>
+              <div className="p-2"><strong>Plate Number</strong></div>
+              <div className="p-2"><strong>Floor</strong></div>
+              <div className="p-2"><strong>Slot Number</strong></div>
+            </div>
+      
+            {/* Details */}
+            <div className="d-flex justify-content-between mb-2">
+              <div className="p-2">{request.userName}</div>
+              <div className="p-2">{request.timeOfRequest}</div>
+              <div className="p-2">{request.carPlateNumber}</div>
+              <div className="p-2">{request.floorTitle}</div>
+              <div className="p-2">{request.slotId + 1}</div>
+            </div>
+      
+            {/* MA CLICK NGA ICON SA MAP */}
+            <Button variant="primary" onClick={toggleMapModal}>
+              <i className="bi bi-geo-alt"></i> View Map
             </Button>
-          </Modal.Footer>
-        </Modal>
-
-        {/* Buttons */}
-        <div className="d-flex flex-row align-items-center mt-2">
-          <button
-            className="btn btn-success mr-2"
-            onClick={() => handleReservation(true, request, index)}
-          >
-            Accept Reservation
-          </button>
-          <button
-            className="btn btn-danger"
-            onClick={() => handleReservation(false, request, index)}
-          >
-            Decline Reservation
-          </button>
-        </div>
-      </div>
-    );
-  };
+      
+            {/* PARA SA MAP*/}
+            <Modal show={showMapModal} onHide={toggleMapModal} centered>
+              <Modal.Header closeButton>
+                <Modal.Title>Map</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                <img
+                  src={`https://maps.googleapis.com/maps/api/staticmap?center=${request.latitude},${request.longitude}&zoom=14&size=600x300&maptype=roadmap&markers=color:red%7Clabel:S%7C${request.latitude},${request.longitude}&key=YOUR_API_KEY`}
+                  alt="Map"
+                  style={{ width: '100%', height: 'auto' }}
+                />
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="secondary" onClick={toggleMapModal}>Close</Button>
+              </Modal.Footer>
+            </Modal>
+      
+            {/* Buttons */}
+            <div className="d-flex flex-row align-items-center mt-2">
+              <button className="btn btn-success mr-2" onClick={() => handleReservation(true, request, index)}>
+                Accept Reservation
+              </button>
+              <button className="btn btn-danger" onClick={() => handleReservation(false, request, index)}>
+                Decline Reservation
+              </button>
+            </div>
+          </div>
+        );
+      };
 
   return (
     <div>

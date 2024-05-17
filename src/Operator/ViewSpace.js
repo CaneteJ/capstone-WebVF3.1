@@ -2,18 +2,19 @@ import React, { useState, useEffect, useContext, useMemo} from 'react';
 import { Button, Modal, Form, Tab, Nav} from 'react-bootstrap';
 import { Dropdown, DropdownButton } from 'react-bootstrap';
 import { Link, } from 'react-router-dom';
-import { FaUserCircle, FaBars } from "react-icons/fa";
+import { FaUserCircle, FaBars, FaBell,  } from "react-icons/fa";
 import { db } from "../config/firebase";
 import { collection, getDocs, query, where, serverTimestamp,addDoc, setDoc, doc, getDoc, onSnapshot, deleteDoc} from 'firebase/firestore';
 import SearchForm from './SearchForm';
 import UserContext from '../UserContext';
 import { useNavigate } from 'react-router-dom';
+import { faB, faBell } from '@fortawesome/free-solid-svg-icons'
 import './DashboardOp.css';
 import './space.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons';
 import Card from 'react-bootstrap/Card';
-
+import { ToastContainer, toast } from 'react-toastify';
 
 const ParkingSlot = () => {
     const styles = {
@@ -92,6 +93,103 @@ useEffect(() => {
   }
 }, [user]);
 
+const [notifications, setNotifications] = useState([]);
+const [showNotification, setShowNotification] = useState(false);
+const [notificationCount, setNotificationCount] = useState(0);
+useEffect(() => {
+  const unsubscribe = onSnapshot(
+    query(
+      collection(db, 'notifications'),
+      where("managementName", "==", user.managementName)
+    ),
+    (snapshot) => {
+      const fetchedNotifications = [];
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === "added") {
+          fetchedNotifications.push({ ...change.doc.data(), id: change.doc.id });
+        }
+        if (change.type === "removed") {
+          setNotifications(notifications.filter(n => n.id !== change.doc.id));
+        }
+      });
+      setNotifications(fetchedNotifications);
+      setNotificationCount(fetchedNotifications.length);
+    }
+  );
+
+  return () => unsubscribe();
+}, [user?.managementName]);
+
+const handleNotificationClick = async (notificationId) => {
+  setShowNotification(!showNotification); 
+  setNotifications([]);
+  navigate("/Reservation");
+  if (!showNotification) {
+    try {
+      const notificationRef = doc(db, 'notifications', notificationId);
+      await deleteDoc(notificationRef);
+      setNotifications(notifications.filter(notification => notification.id !== notificationId));
+    } catch (error) {
+      console.error('Error removing notification:', error);
+    }
+  }
+};
+
+
+useEffect(() => {
+  let fetchedSlotData = new Map();
+  // Fetch slot data
+  const fetchSlotData = async () => {
+    const slotDataQuery = query(collection(db, 'slot', user.managementName, 'slotData'));
+    const slotDataSnapshot = await getDocs(slotDataQuery);
+    slotDataSnapshot.forEach((doc) => {
+      fetchedSlotData.set(doc.id, { ...doc.data(), occupied: doc.data().status === 'Occupied' });
+    });
+  };
+
+  const updateSlots = () => {
+    setSlotSets(currentSlotSets =>
+      currentSlotSets.map(slotSet => {
+       
+        const floorOrZone = slotSet.title.replace(/\s+/g, '_'); 
+        return {
+          ...slotSet,
+          slots: slotSet.slots.map((slot, index) => {
+            
+            const slotId1 = `slot_${slotSet.title}_${index}`;
+            const slotId = floorOrZone === 'General_Parking'
+              ? `General Parking_${index + 1}` 
+              : `${floorOrZone}_${slot.slotNumber || index + 3}`; 
+            const slotData = fetchedSlotData.get(slotId1);
+            const isOccupied = (slotData && slotData.occupied);
+            return {
+              ...slot,
+              occupied: isOccupied,
+              userDetails: isOccupied
+                ? { 
+                    // Show carPlateNumber from resData if available, otherwise from slotData
+                    carPlateNumber: slotData?.userDetails?.carPlateNumber
+                  }
+                : undefined,
+            };
+          }),
+        };
+      })
+    );
+  };
+
+  
+  const fetchDataAndUpdateSlots = async () => {
+    await fetchSlotData();
+    updateSlots();
+  };
+
+  // Run the async function
+  fetchDataAndUpdateSlots();
+
+}, [db, user.managementName]);
+
+
 useEffect(() => {
   const managementName = user?.managementName;
   if (managementName) {
@@ -121,7 +219,7 @@ const fetchData = async (managementName) => {
     const occupiedSlots = new Map();
     slotsSnapshot.forEach(doc => {
       const data = doc.data();
-      occupiedSlots.set(doc.id, data); // Ensure the id is used correctly
+      occupiedSlots.set(doc.id, data);
     });
 
     const establishmentRef = collection(db, 'establishments');
@@ -132,11 +230,13 @@ const fetchData = async (managementName) => {
       const establishmentData = establishmentSnapshot.docs[0].data();
       let newSlotSets = [];
 
-      if (Array.isArray(establishmentData.floorDetails)) {
+      // Check if floorDetails exist and handle them accordingly
+      if (establishmentData.floorDetails && establishmentData.floorDetails.length > 0) {
+        // Floor details provided as an array
         newSlotSets = establishmentData.floorDetails.map(floor => ({
           title: floor.floorName,
           slots: Array.from({ length: parseInt(floor.parkingLots) }, (_, i) => {
-            const slotKey = `slot_${floor.floorName}_${i}`; // Adjusted to match your Firestore keys
+            const slotKey = `slot_${floor.floorName}_${i}`;
             const slotData = occupiedSlots.get(slotKey);
             return {
               id: i,
@@ -145,6 +245,20 @@ const fetchData = async (managementName) => {
             };
           }),
         }));
+      } else if (establishmentData.totalSlots) {
+        // Only totalSlots provided, create a single generic floor
+        newSlotSets = [{
+          title: 'General Parking',
+          slots: Array.from({ length: parseInt(establishmentData.totalSlots) }, (_, i) => {
+            const slotKey = `slot_General Parking_${i}`;
+            const slotData = occupiedSlots.get(slotKey);
+            return {
+              id: i,
+              occupied: !!slotData,
+              userDetails: slotData ? slotData.userDetails : null
+            };
+          }),
+        }];
       }
 
       setSlotSets(newSlotSets);
@@ -158,6 +272,7 @@ const fetchData = async (managementName) => {
     setIsLoading(false);
   }
 };
+
 
   
   useEffect(() => {
@@ -430,9 +545,20 @@ const renderFloorTabs = () => {
     }
     return totalPreviousSlots + slotIndex + 1;
   };
-
+  
   return (
     <div style={{ marginTop: '20px' }}>
+      <div className="notification-bell" onClick={() => { setShowNotification(!showNotification); setNotificationCount(0); }}>
+        <FontAwesomeIcon icon={faBell} size="lg" />
+        {notifications.length > 0 && !showNotification && (
+          <span className="badge rounded-pill bg-danger">{notifications.length}</span>
+        )}
+</div>
+{showNotification && (
+  <div className="notification-panel show">
+    {notifications.length > 0 ? renderNotifications() : <p>No new notifications.</p>}
+  </div>
+)}
       <Tab.Container activeKey={currentSetIndex} onSelect={k => setCurrentSetIndex(k)} id="floor-tabs">
         <Nav variant="tabs" className="flex-row" style={{ justifyContent: 'left', borderColor:'#132B4B' }}>
           {slotSets.map((slotSet, index) => (
@@ -608,12 +734,32 @@ const toggleSidebar = () => {
   setShowSidebar(!showSidebar);
 };
 
+const renderNotifications = () => {
+  return (
+    <table className="notification-table">
+      <thead>
+        <tr>
+        <th style={{color: 'green'}}>Notifications</th>
+        </tr>
+      </thead>
+     <tbody>
+        {notifications.map((notification, index) => (
+         <tr key={index} onClick={() => handleNotificationClick(notification)}>
+           <td style={{color: 'black'}}>{notification.details} by {notification.userEmail}</td>
+         </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
   return (
     <div className="d-flex" style={{ minHeight: '100vh' }}>
       <div className="sidebar" style={{ width: '250px',  }}>
         <div className="sidebar-header" style={{ padding: '20px', color: 'white', textAlign: 'center', fontSize: '24px' }}>
           <FaUserCircle size={28} style={{ marginRight: '10px' }} /> Welcome,  {user?.firstName || 'No name found'}
         </div>
+        
         <div class="wrapper">
           <div class="side">
             <h2>Menu</h2>
