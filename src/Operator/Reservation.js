@@ -51,6 +51,7 @@ const Reservation = () => {
     const [summaryCardsData, setSummaryCardsData] = useState([]);
     const [agent, setAgent] = useState([]);    
 
+  
     useEffect(() => {
         const unsubscribe = onSnapshot(collection(db, 'notifications'), (snapshot) => {
           snapshot.docChanges().forEach((change) => {
@@ -265,17 +266,16 @@ const Reservation = () => {
     
         return (
         <div style={{
+          marginTop: '-95px',
           border: "3px solid #7abdea",
           borderRadius: "8px",
           padding: "10px",
-          margin: 'auto',
-          maxWidth: '70vh',
-          height: '70vh',
+          maxWidth: '40vw',
+          height: '50vh',
           boxSizing: 'border-box',
           boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
           overflowY: 'auto',
-           
-              
+          marginLeft: '-120px'
               }}>
                 <h5 style={{ 
                   color: "#003851", 
@@ -283,7 +283,7 @@ const Reservation = () => {
                   fontSize: "1.5rem", 
                   fontWeight: "bold", 
                   marginBottom: "1.5rem",
-               
+                  
                 }}>
                   Reservation History
                 </h5>
@@ -448,7 +448,7 @@ const Reservation = () => {
         </div>
     </div>
 </nav>
-<div className="main-content">
+{/* <div className="main-content">
                         <div className="summary-cards">
                             {summaryCardsData.map(card => (
                                 <div key={card.title} className={`card card-${card.cardType}`} onClick={() => handleCardClick(card.cardType)}>
@@ -461,7 +461,7 @@ const Reservation = () => {
                             ))}
                         </div>
                         </div>
-                        {renderFormBasedOnCardType()}     
+                        {renderFormBasedOnCardType()}      */}
                         <hr className="divider" />
                           
                 <MDBContainer className="py-4">

@@ -173,7 +173,7 @@ function CreateAccount() {
                     <h2>Menu</h2>
                     <ul>
                         <li><a href="Dashboard"><i class="fas fa-home"></i>Home</a></li>
-                        <li><a href='AgentRegistration'><i class="fas fa-user"></i>Account Management</a></li>
+                        <li><a href='AgentRegistration'><i class="fas fa-user"></i>Operator Registration</a></li>
                         <li><a href='Tracks'><i class="fas fa-project-diagram"></i>Management Details</a></li>
                         <li><a href="Profiles"><i class="fas fa-blog"></i>Profile</a></li>
                         <li><a href="Feedback"><i class="fas fa-blog"></i>Feedback</a></li>
@@ -188,7 +188,7 @@ function CreateAccount() {
 
       <MDBContainer>
         <MDBRow>
-          <MDBCol className="background-container d-flex align-items-center justify-content-center" style={{marginTop: '10vh', margin: 'auto'}}>
+          {/* <MDBCol className="background-container d-flex align-items-center justify-content-center" style={{marginTop: '10vh', margin: 'auto', wi}}>
             <div className="overlay">
               <div className="text-content">
                 <h2>SpotWise</h2>
@@ -198,9 +198,9 @@ function CreateAccount() {
                 <p>Optimize Your Workflow</p>
               </div>
             </div>
-          </MDBCol>
+          </MDBCol> */}
           <MDBCol className="d-flex align-items-center justify-content-center form-column">
-            <MDBCard className="form-container" style={{  height: '85vh', margin: 'auto', borderRadius: '0'}}>
+            <MDBCard className="form-container" style={{  height: '85vh', margin: 'auto', borderRadius: '10px'}}>
               <MDBCardBody className="card-body">
                 <h4 className="text-center mb-4" style={{ fontWeight: "bold" }}>Create Operator Account</h4>
                 <form onSubmit={handleSubmit} className="form-body">

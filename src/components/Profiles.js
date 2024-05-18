@@ -232,7 +232,7 @@ export default function EditButton() {
                     <ul>
                         <li><a href="Dashboard"><i class="fas fa-home"></i>Home</a></li>
                         <li><a href='AgentRegistration'><i class="fas fa-user"></i>Account Management</a></li>
-                        <li><a href='Tracks'><i class="fas fa-project-diagram"></i>Management Details</a></li>
+                        <li><a href='Tracks'><i class="fas fa-project-diagram"></i>Operator Registration</a></li>
                         <li><a href="Profiles"><i class="fas fa-blog"></i>Profile</a></li>
                         <li><a href="Feedback"><i class="fas fa-blog"></i>Feedback</a></li>
                         <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>

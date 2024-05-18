@@ -10,11 +10,10 @@
     background: url('https://img.freepik.com/free-vector/realistic-neon-lights-background_23-2148907367.jpg') no-repeat center center;
     background-size: cover;
     height: 85vh;
-    width: 10vh;
-    padding: 0;
-    position: relative;
+    width: 5vh;
+    padding: 1.5rem;
     flex: 1;
-
+    margin-right: 80;
   }
   
   .overlay {
@@ -44,6 +43,7 @@
     align-items: center;
     justify-content: center;
     flex: 1;
+    max-width: 50vw;
   }
   
   .card-body {

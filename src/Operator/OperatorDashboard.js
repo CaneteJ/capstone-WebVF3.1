@@ -7,7 +7,6 @@ import { DropdownButton, Dropdown } from 'react-bootstrap';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { FaUserCircle, FaCar, FaParking, FaRegListAlt } from "react-icons/fa";
-import { FaUserCircle, FaCar, FaParking, FaRegListAlt } from "react-icons/fa";
 import { faCar, faCoins, faUser, faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons';
 import { db } from "../config/firebase";
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';

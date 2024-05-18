@@ -46,7 +46,7 @@ const FetchEstablishments = () => {
             <li><a href="AdminPage"><i class="fas fa-home"></i>Home</a></li>
             <li><a href='FetchEstablishments'><i class="fas fa-user"></i>Establishment Account</a></li>
             <li><a href='FetchParkingUsers'><i class="fas fa-address-card"></i>Parking Seeker List</a></li>
-            <li><a href='FetchAgents'><i class="fas fa-project-diagram"></i>Agents List</a></li>
+            <li><a href='FetchAgents'><i class="fas fa-project-diagram"></i>Operator List</a></li>
             <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
         </ul> 
     </div>
@@ -64,7 +64,7 @@ const FetchEstablishments = () => {
                 <React.Fragment key={establishment.id}>
                   <li className="list-group-item d-flex align-items-center"  style={{border: '2px solid #132B4B', borderRadius: 20}}>
                     <img
-                      src={establishment.profileImageUrl || '/default-avatar.png'}
+                      src={establishment.profileImageUrl || '/defaultt.png'}
                       alt={establishment.managementName}
                       className="rounded-circle mr-3"
                       style={{ width: '85px'}}

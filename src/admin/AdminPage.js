@@ -174,7 +174,7 @@ function AdminPage() {
         { title: 'Pending Accounts  ', value: `${pendingAccounts.length} Account Pending`, imgSrc: 'pending.png' },
         { title: 'Establishment Accounts', value: `${establishments.length} Registered`, imgSrc: 'check.png'},
         { title: 'Parking Seekers', value: `${parkingSeeker.length} Registered`, imgSrc: 'check.png'},
-        { title: 'Agents Accounts', value: `${agent.length} Registered`, imgSrc: 'check.png'}
+        { title: 'Operator Accounts', value: `${agent.length} Registered`, imgSrc: 'check.png'}
         
     ]);
 }, [pendingAccounts]);

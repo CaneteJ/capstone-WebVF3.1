@@ -45,7 +45,7 @@ const FetchAgents = () => {
             <li><a href="AdminPage"><i class="fas fa-home"></i>Home</a></li>
             <li><a href='FetchEstablishments'><i class="fas fa-user"></i>Establishment Account</a></li>
             <li><a href='FetchParkingUsers'><i class="fas fa-address-card"></i>Parking Seeker List</a></li>
-            <li><a href='FetchAgents'><i class="fas fa-project-diagram"></i>Agents List</a></li>
+            <li><a href='FetchAgents'><i class="fas fa-project-diagram"></i>Operator List</a></li>
             <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
         </ul> 
     </div>
@@ -53,7 +53,7 @@ const FetchAgents = () => {
     
       </div>
       <div className="main-content container mt-5">
-      <h1 className="pending text-center font-weight-bold">Agents Account</h1>
+      <h1 className="pending text-center font-weight-bold">Operator Account</h1>
       <hr className="divider" />
       <div className="project-list mt-5 p-3 bg-light rounded" style={{ overflowY: 'scroll', height: '70vh', border: '2px solid #132B4B', boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)' }}>
         {agents.length > 0 ? (
@@ -62,7 +62,7 @@ const FetchAgents = () => {
               <React.Fragment key={agent.id}>
                 <li className="list-group-item d-flex align-items-center mb-3" style={{ border: '2px solid #132B4B', borderRadius: 20 }}>
                   <img
-                    src={agent.profileImageUrl || '/default-avatar.png'}
+                    src={agent.profileImageUrl || '/defaultt.png'}
                     alt={agent.profileImageUrl}
                     className="w3-bar-item w3-circle mr-3"
                     style={{ width: '85px' }}
@@ -90,7 +90,7 @@ const FetchAgents = () => {
             ))}
           </ul>
         ) : (
-          <p>No agents found.</p>
+          <p>No Operator found.</p>
         )}
       </div>
     </div>

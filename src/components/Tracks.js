@@ -37,6 +37,7 @@ const App = () => {
     const [scheduleData, setScheduleData] = useState([]);
     const [revenue, setRevenue] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [slotData, setSlotData] = useState([]);
     const handleViewProfile = () => {
         navigate("/Profiles");
     };
@@ -96,7 +97,7 @@ const App = () => {
             setLoading(true);
             try {
                 const currentUserManagementName = user.managementName;
-                const logsCollectionRef = collection(db, "logs");
+                const logsCollectionRef = collection(db, "slot");
 
                 const q = query(logsCollectionRef, where("managementName", "==", currentUserManagementName));
 
@@ -106,8 +107,9 @@ const App = () => {
                     logs.push({ id: doc.id, ...doc.data() });
                 });
                 setParkingLogs(logs);
+                console.log ("ASDSADAS", parkingLogs)
             } catch (error) {
-                console.error("Error fetching parking logs: ", error);
+                console.error("Error fetching parking asdasd: ", error);
             } finally {
                 setLoading(false);
             }
@@ -144,6 +146,60 @@ const App = () => {
         };
     }, []);
 
+    const fetchSlotData = async () => {
+        setLoading(true);
+        try {
+            const slotDataCollectionRef = collection(db, "slot", user.managementName, "slotData");
+            const querySnapshot = await getDocs(slotDataCollectionRef);
+            const slotData = [];
+            querySnapshot.forEach((doc) => {
+                slotData.push({ id: doc.id, ...doc.data() });
+            });
+            setSlotData(slotData);
+            console.log("Fetched Slot Data: ", slotData);
+        } catch (error) {
+            console.error("Error fetching slot data: ", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchSlotData();
+    }, []);
+
+    useEffect(() => {
+        const fetchEstablishment = async () => {
+            if (!user || !user.managementName) {
+                setLoading(false);
+                return;
+            }
+            setLoading(true);
+            try {
+                const currentUserManagementName = user.managementName;
+                const logsCollectionRef = collection(db, "establishments");
+
+                const q = query(logsCollectionRef, where("managementName", "==", currentUserManagementName));
+
+                const querySnapshot = await getDocs(q);
+                const logs = [];
+                querySnapshot.forEach((doc) => {
+                    logs.push({ id: doc.id, ...doc.data() });
+                });
+                setParkingLogs(logs);
+                console.log ("ASDSADAS", parkingLogs)
+            } catch (error) {
+                console.error("Error fetching parking asdasd: ", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (user && user.managementName) {
+            fetchEstablishment();
+        }
+    }, [user, db]);
+
     const styles = {
         welcomeMessage: {
             position: "absolute",
@@ -160,170 +216,144 @@ const App = () => {
     };
 
     return (
-<section>
-   
-   <div className="admin-dashboard"> {/* Adjusted marginTop to account for navbar */}
-       <div className="sidebar">
-           <div className="admin-container">
-           </div>
-           <div class="wrapper">
-               <div class="side">
-                   <div>
-                               {profileImageUrl ? <MDBCardImage src={profileImageUrl} alt="Operator Profile Logo" className="rounded-circle" style={{ width: "70px"}} fluid /> : <MDBCardImage src="default_placeholder.jpg" alt="Default Profile Logo" className="rounded-circle" style={{ width: "70px", marginTop: '-6vh' }} fluid />}
-                               <p style={{ fontFamily: "Georgina", fontSize: "20px", border: "white", fontWeight: "bold", colo: 'white'}}>Administrator</p>
-                               <p style={{ fontFamily: "Georgina", color: "white", fontWeight: "bold", fontSize: 12, marginTop: -15}}>
-                                   {managementName}                 
-                               </p>
-                               </div>            
-                   <h2>Menu</h2>
-                   <ul>
-                       <li><a href="Dashboard"><i class="fas fa-home"></i>Home</a></li>
-                       <li><a href='AgentRegistration'><i class="fas fa-user"></i>Account Management</a></li>
-                       <li><a href='Tracks'><i class="fas fa-project-diagram"></i>Management Details</a></li>
-
-                       <li><a href="Profiles"><i class="fas fa-blog"></i>Profile</a></li>
-                       <li><a href="Feedback"><i class="fas fa-blog"></i>Feedback</a></li>
-                       <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
-                   </ul>
-
-                   
-               </div>
-               
-           </div>
-           <nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: '#132B4B', position: "fixed", width: "500vh", marginLeft: '-150vh',height: '15%', marginTop: '-8%'}}>
-<div className="container">
-   <Link className="navbar-brand" to="/Dashboard" style={{ fontSize: "25px"}}>
-   </Link>
-</div>
-</nav>
-</div>
-
-
-<MDBContainer style={{marginTop: '15vh'}}>
-            <h2 style={{fontSize: 50, margin: 'auto'}}>Management Details Page</h2>
-            <hr className="divider" style={{Color: '#132B4B'}} />
-            <MDBRow className="mb-4 justify-content-center">
-                <MDBCol xs={12} md={4} className="mb-4">
-                <div className="text-center py-4">
-                <img 
-                    src="coins.png" 
-                    alt="Revenue" 
-                    className="img-fluid mb-3" 
-                    style={{ height: '90px', borderRadius: '8px' }} />
-                <Button 
-                    onClick={handleShowAccountingPage} 
-                    variant="info" 
-                    className="btn-block btn-lg" 
-                    style={{ boxShadow: '0 4px 8px rgba(0,0,0,0.2)' }}>
-                    Show Revenue
-                </Button>
-            </div>
-                </MDBCol>
-                <MDBCol xs={12} md={4} className="mb-4">
-                    <div className="text-center">
-                    <div className="text-center py-4">
-                    <img src="customer.jpg" alt="Customers" className="img-fluid mb-3" style={{ height: '80px' }} />
-                        <Button 
-                            onClick={handleShowCustomer}
-                            variant="info" 
-                            className="btn-block btn-lg" 
-                            style={{ boxShadow: '0 4px 8px rgba(0,0,0,0.2)' }}>
-                            Show Revenue
-                        </Button>
-                    </div> 
+        <section>
+            <div className="admin-dashboard">
+                <div className="sidebar">
+                    <div className="admin-container"></div>
+                    <div className="wrapper">
+                        <div className="side">
+                            <div>
+                                {profileImageUrl ? <MDBCardImage src={profileImageUrl} alt="Operator Profile Logo" className="rounded-circle" style={{ width: "70px"}} fluid /> : <MDBCardImage src="default_placeholder.jpg" alt="Default Profile Logo" className="rounded-circle" style={{ width: "70px", marginTop: '-6vh' }} fluid />}
+                                <p style={{ fontFamily: "Georgina", fontSize: "20px", border: "white", fontWeight: "bold", colo: 'white'}}>Administrator</p>
+                                <p style={{ fontFamily: "Georgina", color: "white", fontWeight: "bold", fontSize: 12, marginTop: -15}}>
+                                    {managementName}                 
+                                </p>
+                            </div>            
+                            <h2>Menu</h2>
+                            <ul>
+                                <li><a href="Dashboard"><i class="fas fa-home"></i>Home</a></li>
+                                <li><a href='AgentRegistration'><i class="fas fa-user"></i>Operator Registration</a></li>
+                                <li><a href='Tracks'><i class="fas fa-project-diagram"></i>Management Details</a></li>
+                                <li><a href="Profiles"><i class="fas fa-blog"></i>Profile</a></li>
+                                <li><a href="Feedback"><i class="fas fa-blog"></i>Feedback</a></li>
+                                <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
+                            </ul>
+                        </div>
                     </div>
-                </MDBCol>
-            </MDBRow>
-           
-            <hr className="divider" />
-            {showAccountingPage && (
-                <div>
-                    <h3 className="text-center mb-4"><i className="fas fa-dollar-sign"></i> Revenue Details</h3>
-                    <Table striped bordered hover responsive className="text-center">
-                        <thead className="bg-dark text-white">
-                            <tr>
-                                <th>Customer Email</th>
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th>Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {parkingLogs.map((log) => (
-                                <tr key={log.id}>
-                                    <td>{log.email}</td>
-                                    <td>
-                                        <p className="text-success">Time in: {log.timeIn && new Date(log.timeIn.seconds * 1000).toLocaleString()}</p>
-                                        <p className="text-danger">Time out: {log.timeOut && new Date(log.timeOut.seconds * 1000).toLocaleString()}</p>
-                                    </td>
-                                    <td>{log.name} - {log.paymentStatus}</td>
-                                    <td>{log.user.parkingPay}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </Table>
+                    <nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: '#132B4B', position: "fixed", width: "500vh", marginLeft: '-150vh',height: '15%', marginTop: '-8%'}}>
+                        <div className="container">
+                            <Link className="navbar-brand" to="/Dashboard" style={{ fontSize: "25px"}}></Link>
+                        </div>
+                    </nav>
                 </div>
-            )}
-
-            {showCustomer && (
-                <div>
-                    <h3 className="text-center mb-4"><i className="fas fa-users"></i> Customer Details</h3>
-                    <Table striped bordered hover responsive className="text-center">
-                        <thead className="bg-primary text-white">
-                            <tr>
-                                <th>Customer Email</th>
-                                <th>Name</th>
-                                <th>Vehicle</th>
-                                <th>Vehicle Plate Number</th>
-                                <th>Time in</th>
-                                <th>Time out</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {parkingLogs.map((log) => (
-                                <tr key={log.id}>
-                                    <td>{log.email}</td>
-                                    <td>{log.name}</td>
-                                    <td>{log.car}</td>
-                                    <td>{log.carPlateNumber}</td>
-                                    <td>{new Date(log.timeIn.seconds * 1000).toLocaleString()}</td>
-                                    <td>{new Date(log.timeOut.seconds * 1000).toLocaleString()}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </Table>
-                </div>
-            )}
-
-            {showSchedule && (
-                <div>
-                    <h3 className="text-center mb-4"><i className="fas fa-calendar-alt"></i> Agent Schedule Details</h3>
-                    <Table striped bordered hover responsive className="text-center">
-                        <thead className="bg-success text-white">
-                            <tr>
-                                <th>Agent Name</th>
-                                <th>Email Address</th>
-                                <th>Time in</th>
-                                <th>Time out</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {scheduleData.map((row) => (
-                                <tr key={row.id}>
-                                    <td>{row.name}</td>
-                                    <td>{row.email}</td>
-                                    <td>{row.timeIn}</td>
-                                    <td>{row.timeOut}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </Table>
-                </div>
-            )}
-        </MDBContainer>
+                <MDBContainer style={{marginTop: '15vh'}}>
+                    <h2 style={{fontSize: 50, margin: 'auto'}}>Management Details Page</h2>
+                    <hr className="divider" style={{Color: '#132B4B'}} />
+                    <MDBRow className="mb-4 justify-content-center">
+                        {/* <MDBCol xs={12} md={4} className="mb-4">
+                            <div className="text-center py-4">
+                                <img src="coins.png" alt="Revenue" className="img-fluid mb-3" style={{ height: '90px', borderRadius: '8px' }} />
+                                <Button onClick={handleShowAccountingPage} variant="info" className="btn-block btn-lg" style={{ boxShadow: '0 4px 8px rgba(0,0,0,0.2)' }}>
+                                    Show Revenue
+                                </Button>
+                            </div>
+                        </MDBCol> */}
+                        <MDBCol xs={12} md={4} className="mb-4">
+                            <div className="text-center">
+                                <div className="text-center py-4">
+                                    <img src="customer.jpg" alt="Customers" className="img-fluid mb-3" style={{ height: '80px', marginRight:'20px'}} />
+                                    <Button onClick={handleShowCustomer} variant="info" className="btn-block btn-lg" style={{ boxShadow: '0 4px 8px rgba(0,0,0,0.2)' }}>
+                                        Show Customer Details
+                                    </Button>
+                                </div>
+                            </div>
+                        </MDBCol>
+                    </MDBRow>
+                    <hr className="divider" />
+                    {showAccountingPage && (
+                        <div>
+                            <h3 className="text-center mb-4"><i className="fas fa-dollar-sign"></i> Revenue Details</h3>
+                            <Table striped bordered hover responsive className="text-center">
+                                <thead className="bg-dark text-white">
+                                    <tr>
+                                        <th>Customer Email</th>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {parkingLogs.map((log) => (
+                                        <tr key={log.id}>
+                                            <td>{log.name}</td>
+                                            <td>
+                                                <p className="text-success">Time in: {log.timeIn && new Date(log.timeIn.seconds * 1000).toLocaleString()}</p>
+                                                <p className="text-danger">Time out: {log.timeOut && new Date(log.timeOut.seconds * 1000).toLocaleString()}</p>
+                                            </td>
+                                            <td>{log.name} - {log.paymentStatus}</td>
+                                            <td>{log.user.status}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </Table>
+                        </div>
+                    )}
+                    {showCustomer && (
+                        <div>
+                            <h3 className="text-center mb-4"><i className="fas fa-users"></i> Customer Details</h3>
+                            <Table striped bordered hover responsive className="text-center">
+                                <thead className="bg-primary text-white">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Floor</th>
+                                        <th>Slot Number</th>
+                                        <th>Status</th>
+                                        <th>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {slotData.map((slot) => (
+                                        <tr key={slot.id}>
+                                         
+                                            <td>{slot.userDetails.name}</td>
+                                            <td>{slot.userDetails.floorTitle}</td>
+                                            <td>{slot.userDetails.slotId}</td>
+                                            <td>{slot.status}</td>
+                                            <td>{slot.timestamp && new Date(slot.timestamp.seconds * 1000).toLocaleString()}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </Table>
+                        </div>
+                    )}
+                    {showSchedule && (
+                        <div>
+                            <h3 className="text-center mb-4"><i className="fas fa-calendar-alt"></i> Agent Schedule Details</h3>
+                            <Table striped bordered hover responsive className="text-center">
+                                <thead className="bg-success text-white">
+                                    <tr>
+                                        <th>Agent Name</th>
+                                        <th>Email Address</th>
+                                        <th>Time in</th>
+                                        <th>Time out</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {scheduleData.map((row) => (
+                                        <tr key={row.id}>
+                                            <td>{row.name}</td>
+                                            <td>{row.email}</td>
+                                            <td>{row.timeIn}</td>
+                                            <td>{row.timeOut}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </Table>
+                        </div>
+                    )}
+                </MDBContainer>
             </div>
         </section>
     );
 };
-
 export default App;

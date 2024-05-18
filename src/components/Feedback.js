@@ -176,7 +176,7 @@ const FeedbackPage = () => {
                     <ul>
                         <li><a href="Dashboard"><i class="fas fa-home"></i>Home</a></li>
                         <li><a href='AgentRegistration'><i class="fas fa-user"></i>Account Management</a></li>
-                        <li><a href='Tracks'><i class="fas fa-project-diagram"></i>Management Details</a></li>
+                        <li><a href='Tracks'><i class="fas fa-project-diagram"></i>Operator Registration</a></li>
                         <li><a href="Profiles"><i class="fas fa-blog"></i>Profile</a></li>
                         <li><a href="Feedback"><i class="fas fa-blog"></i>Feedback</a></li>
                         <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
@@ -219,12 +219,12 @@ const FeedbackPage = () => {
                     })}
                   </ul>
                   <div className="d-flex justify-content-center">
-                    <button className="btn btn-primary me-2" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
-                      Previous Page
+                    <button className="btn btn-secondary me-2" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
+                       Prev 
                     </button>
                     <span className="mt-2">{`Page ${currentPage}`}</span>
-                    <button className="btn btn-primary ms-2" onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>
-                      Next Page
+                    <button className="btn btn-success ms-2" onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>
+                      Next
                     </button>
                   </div>
                 </div>
