@@ -183,12 +183,11 @@ const Reservation = () => {
           border: "3px solid #7abdea",
           borderRadius: "8px",
           padding: "10px",
-          marginTop: '-3rem',
+          margin: 'auto',
           maxWidth: '70vh',
-          height: '71vh',
+          height: '70vh',
           boxSizing: 'border-box',
           boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
-          maxHeight: '100vh',
           overflowY: 'auto',
            
               
@@ -374,17 +373,18 @@ const Reservation = () => {
 
   
   <div style={{
-  width: "80vh",            // Use vh for a responsive width based on the viewport height
-  height: "70vh",           // Use vh for a responsive height based on the viewport
+  width: "80vh",
+  height: "70vh",
   overflowY: "scroll",
-  padding: "1rem",          // Use rem for padding to scale with the font size
+  padding: "1rem",
+  margin: '10vh',
   background: "#132B4B",
   borderWidth: 3,
   borderRadius: 5,
-  marginLeft: '-10rem',
+  marginLeft: '-30vh',        // Adjusted marginLeft to 0
   borderStyle: 'solid',
   borderColor: '#7abdea',
-  boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)", // Add a subtle shadow
+  boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
 }}>
  
 

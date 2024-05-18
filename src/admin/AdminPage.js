@@ -3,13 +3,118 @@ import { db } from '../config/firebase';
 import { collection, query, where, getDocs, updateDoc, doc, getDoc,setDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 import './AdminPage.css';
 import { Link } from 'react-router-dom';
+import styled from 'styled-components';
+
 function AdminPage() {
     const [pendingAccounts, setPendingAccounts] = useState([]);
     const [establishments, setEstablishments] = useState([]);
     const [summaryCardsData, setSummaryCardsData] = useState([]);
     const [parkingSeeker, setParkingSeeker] = useState([]);
     const [agent, setAgent] = useState ([]);
-
+    const MainContent = styled.div`
+    margin: auto;
+    margin-top: 10vh;
+    padding: 20px;
+    max-width: 1200px;
+  `;
+  
+  const SummaryCards = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 40px;
+  `;
+  
+  const Card = styled.div`
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    width: 280px;
+    text-align: center;
+  `;
+  
+  const CardImage = styled.img`
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+  `;
+  
+  const CardContent = styled.div`
+    padding: 20px;
+  `;
+  
+  const CardTitle = styled.div`
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 10px;
+  `;
+  
+  const CardValue = styled.div`
+    font-size: 1.5em;
+    color: #555;
+  `;
+  
+  const ProjectList = styled.div`
+    margin-top: 40px;
+  `;
+  
+  const ProjectTitle = styled.h3`
+    text-align: center;
+    margin-bottom: 20px;
+  `;
+  
+  const PendingAccount = styled.div`
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    padding: 20px;
+  `;
+  
+  const InfoSection = styled.div`
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  `;
+  
+  const Title = styled.div`
+    font-weight: bold;
+    color: #333;
+  `;
+  
+  const Value = styled.div`
+    color: #555;
+  `;
+  
+  const HighlightBackground = styled.span`
+    background: #e0f7fa;
+    padding: 0 5px;
+    border-radius: 4px;
+  `;
+  
+  const Button = styled.button`
+    padding: 10px 20px;
+    margin: 10px 5px;
+    font-weight: bold;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: ${({ color }) => color || '#007bff'};
+    &:hover {
+      opacity: 0.9;
+    }
+  `;
+  
+  const ApproveButton = styled(Button)`
+    background-color: #28a745;
+  `;
+  
+  const DeclineButton = styled(Button)`
+    background-color: #dc3545;
+  `;
     useEffect(() => {
         const fetchParkingUsers = async () => {
           try {
@@ -109,6 +214,7 @@ function AdminPage() {
       }
       
       
+      
     return (
         <div>
         <div className="admin-dashboard">
@@ -130,15 +236,13 @@ function AdminPage() {
             <li><a href='FetchEstablishments'><i class="fas fa-user"></i>Establishment Account</a></li>
             <li><a href='FetchParkingUsers'><i class="fas fa-address-card"></i>Parking Seeker List</a></li>
             <li><a href='FetchAgents'><i class="fas fa-project-diagram"></i>Agents List</a></li>
-            <li><a href="#"><i class="fas fa-blog"></i>Profile</a></li>
             <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
         </ul> 
     </div>
     </div>
        
       </div>
-      <div className="main-content">
-        <div className="header"></div>
+      <div className="main-content" style={{margin: 'auto', marginTop: '10vh'}}>
         <div className="summary-cards" >
           {summaryCardsData.map(card => (
             <div key={card.title} className="card">
@@ -150,8 +254,8 @@ function AdminPage() {
           </div>
           ))}
         </div>
-        <div className="project-list">
-          <h3 className='pending'>Pending Establishment Accounts</h3>
+        <div className="project-list" >
+          <h3 className='pending' >Pending Establishment Accounts</h3>
           {pendingAccounts.map(account => (
             <div key={account.id} className="pending-sub">
               <div className="info-section">

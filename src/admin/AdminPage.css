@@ -11,6 +11,8 @@
     color: white;
     padding: 20px;
     border-top-right-radius: 100px;
+    justify-content: 'relative';
+    
   }
 
   .sidebar p {
@@ -19,6 +21,7 @@
     border-bottom: 1px solid #cccccc5d; 
     font-size: 15px;
     font-family: Georgia, 'Times New Roman', Times, serif;
+    
   }
   .admin{
     margin-bottom: 80px;

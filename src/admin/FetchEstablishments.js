@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../config/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import './AdminPage.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const FetchEstablishments = () => {
   const [establishments, setEstablishments] = useState([]);
@@ -41,61 +42,57 @@ const FetchEstablishments = () => {
     <div class="side">
         <h2>Menu</h2>
         <ul>
+          
             <li><a href="AdminPage"><i class="fas fa-home"></i>Home</a></li>
             <li><a href='FetchEstablishments'><i class="fas fa-user"></i>Establishment Account</a></li>
             <li><a href='FetchParkingUsers'><i class="fas fa-address-card"></i>Parking Seeker List</a></li>
             <li><a href='FetchAgents'><i class="fas fa-project-diagram"></i>Agents List</a></li>
-            <li><a href="#"><i class="fas fa-blog"></i>Profile</a></li>
             <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
         </ul> 
     </div>
     </div>
     
       </div>
-      <div className="main-content">
-      <h1 className="pending" style={{marginTop: '5%', textAlign: 'center', fontWeight: 'bold',}}>Establishments Accounts</h1>
-        <div className="project-list" style={{overflowY: 'scroll',marginTop: '5%', height: '25%', width: '70%'}}>
-         
+      
+      <div className="main-content container mt-5">
+        <h1 className="pending text-center font-weight-bold">Establishments Accounts</h1>
+        <hr className="divider" />
+        <div className="project-list mt-5 p-3 bg-light rounded" style={{ overflowY: 'scroll', height: '70vh', border: '2px solid #132B4B', boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)' }}>
           {establishments.length > 0 ? (
-            <ul>
+            <ul className="list-group"  style={{backgroundColor: 'rgba(19, 43, 75, 0.5)', padding: 10, borderRadius: 20}}>
               {establishments.map((establishment, index) => (
                 <React.Fragment key={establishment.id}>
-                  <li className="w3-bar">
-                    <span className="w3-bar-item w3-button w3-white w3-xlarge w3-right"></span>
+                  <li className="list-group-item d-flex align-items-center"  style={{border: '2px solid #132B4B', borderRadius: 20}}>
                     <img
                       src={establishment.profileImageUrl || '/default-avatar.png'}
                       alt={establishment.managementName}
-                      className="w3-bar-item w3-circle"
-                      style={{ width: '85px' }}
+                      className="rounded-circle mr-3"
+                      style={{ width: '85px'}}
                     />
-                    <div className="w3-bar-item">
-                      <span className="w3-large">
-                        Establishment: {'\t'}
-                        {establishment.managementName}</span>
-                      <br />
-                      <span className="w3-span-sub">
-                        Parking Location: {'\t'}
-                        {establishment.companyAddress}</span>
-                      <br />
-                      <span className="w3-span-sub">
-                        Approved on:{'\t'}
-                        {establishment.createdAt?.seconds
+                    <div>
+                      <h5 className="mb-1">
+                        Establishment: <span className="font-weight-bold">{establishment.managementName}</span>
+                      </h5>
+                      <p className="mb-1">
+                        Parking Location: {establishment.companyAddress}
+                      </p>
+                      <p className="mb-0">
+                        Approved on: {establishment.createdAt?.seconds
                           ? new Date(establishment.createdAt.seconds * 1000).toLocaleDateString()
                           : 'Date not available'}
-                      </span>
+                      </p>
                     </div>
                   </li>
-                  {index < establishments.length - 1 && <hr />} { }
+                  {index < establishments.length - 1 && <hr />}
                 </React.Fragment>
               ))}
             </ul>
           ) : (
-            <p>No establishments found.</p>
+            <p className="text-center">No establishments found.</p>
           )}
         </div>
       </div>
     </div>
   );
-};
-
+}
 export default FetchEstablishments;

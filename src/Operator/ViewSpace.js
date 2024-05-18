@@ -680,13 +680,22 @@ const toggleSidebar = () => {
 };
 
   return (
-    <div className="d-flex" style={{ minHeight: '100vh' }}>
-      <div className="sidebar" style={{ width: '250px',  }}>
-        <div className="sidebar-header" style={{ padding: '20px', color: 'white', textAlign: 'center', fontSize: '24px' }}>
-          <FaUserCircle size={28} style={{ marginRight: '10px' }} /> Welcome,  {user?.firstName || 'No name found'}
-        </div>
-        <div class="wrapper">
-          <div class="side">
+    <div className="d-flex" >
+                 <div>
+                 <div className="admin-dashboard">
+                    <div className="sidebar">
+                        <div className="admin-container">
+                            <img 
+                                src="customer.jpg"
+                                alt="Admin"
+                                className="admin-pic" 
+                                style={{ width: '30px', marginRight: '5px', marginLeft: '-50px' }} 
+                            />
+                            {/* Display the user's email if available */}
+                            <h1 style={{fontFamily:'Helvetica', fontSize: 16}}>Welcome {user?.firstName || 'No name found'}</h1>
+                        </div>
+                        <div class="wrapper">
+            <div class="side">
             <h2>Menu</h2>
             <ul>
             <li><a href="Home"><i class="fas fa-home"></i>Home</a></li>
@@ -804,6 +813,9 @@ const toggleSidebar = () => {
         </Modal.Footer>
       </Modal>
     </div>
+    </div>
+    </div>
+ 
   );
 };
 

@@ -46,7 +46,6 @@ const FetchParkingUsers = () => {
             <li><a href='FetchEstablishments'><i class="fas fa-user"></i>Establishment Account</a></li>
             <li><a href='FetchParkingUsers'><i class="fas fa-address-card"></i>Parking Seeker List</a></li>
             <li><a href='FetchAgents'><i class="fas fa-project-diagram"></i>Agents List</a></li>
-            <li><a href="#"><i class="fas fa-blog"></i>Profile</a></li>
             <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
         </ul> 
     </div>
@@ -54,20 +53,23 @@ const FetchParkingUsers = () => {
     
         </nav>
       </div>
-      <div className="main-content">
-      <h1 className="pending"style={{marginTop: '5%', textAlign: 'center', fontWeight: 'bold',}}>Parking Seekers Accounts</h1>
-      <div className="project-list" style={{ height: '300px', overflowY: 'scroll', marginTop: '5%', height: '50%'}}>
+
+
+      <div  className="main-content container mt-5">
+      <h1  className="pending text-center font-weight-bold">Parking Seekers Accounts</h1>
+      <hr className="divider" />
+      <div className="project-list mt-5 p-3 bg-light rounded" style={{ overflowY: 'scroll', height: '70vh', border: '2px solid #132B4B', boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)' }}>
   {parkingSeeker.length > 0 ? (
-    <ul className="user-list">
+    <ul className="list-group"  style={{backgroundColor: 'rgba(19, 43, 75, 0.5)', padding: 10, borderRadius: 20}}>
       {parkingSeeker.map((seeker, index) => (
         <React.Fragment key={seeker.id}>
-          <li className="user-item">
+          <li className="list-group-item d-flex align-items-center"  style={{border: '2px solid #132B4B', borderRadius: 20}}>
             <img
               src={seeker.profileImageUrl || '/default-avatar.png'}
               alt={seeker.name}
               className="user-image"
             />
-            <div className="user-details">
+            <div >
               <span className="user-name">{seeker.name}</span>
               <br />
               <span className="user-info">
