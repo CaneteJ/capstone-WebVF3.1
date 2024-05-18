@@ -176,9 +176,7 @@ const FeedbackPage = () => {
                     <ul>
                         <li><a href="Dashboard"><i class="fas fa-home"></i>Home</a></li>
                         <li><a href='AgentRegistration'><i class="fas fa-user"></i>Account Management</a></li>
-                        <li><a href='TicketInfo'><i class="fas fa-address-card"></i>Ticket Management</a></li>
                         <li><a href='Tracks'><i class="fas fa-project-diagram"></i>Management Details</a></li>
-                        <li><a href="AgentSchedule"><i class="fas fa-blog"></i>Schedule Management</a></li>
                         <li><a href="Profiles"><i class="fas fa-blog"></i>Profile</a></li>
                         <li><a href="Feedback"><i class="fas fa-blog"></i>Feedback</a></li>
                         <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
@@ -195,69 +193,63 @@ const FeedbackPage = () => {
 </div>
 </nav>
 </div>
-                <MDBContainer className="py-4">
-                    <MDBRow>
-                        <MDBCol lg="4">
-                  
-                        </MDBCol>
-                        <MDBCol lg="8">
-                        <MDBCard style={{ maxWidth: "170vh", marginLeft: '-55vh', marginTop: '20vh', height: "70vh"}}>
-                                <MDBCardBody>
-                                    <h1 style={{ textAlign: "center", fontFamily: "Georgina", fontSize: "32px"}}>Customer Feedback</h1>
-                                    <div style={{ display: "flex" }}>
-                                        <div style={{ ...styles.feedbackContainer, flex: 1}}>
-                                            <div style={navbarStyle}>
-                                                <div style={logoStyle}>FEEDBACK LIST</div>
-                                            </div>
-                                            <ul>
-                                                {pageFeedbackList.map((feedback) => {
-                                                    const isClicked = clickedFeedbackIds.includes(feedback.id);
-                                                    const listItemStyle = {
-                                                        ...feedbackListItemStyle,
-                                                        backgroundColor: isClicked ? "#f0f0f0" : "transparent"
-                                                    };
+<MDBContainer>
+      <MDBRow className="mt-5">
+        <MDBCol lg="4"></MDBCol>
+        <MDBCol lg="8">
+          <MDBCard style={{ maxWidth: "800px", marginLeft: '-20vh', marginTop: '20vh'}}>
+            <MDBCardBody>
+              <h1 className="text-center mb-5">Customer Feedback</h1>
+              <div className="d-flex">
+                <div className="flex-fill" style={{ width: '60%' }}>
+                  <div className="bg-primary text-white p-3 mb-3">FEEDBACK LIST</div>
+                  <ul className="list-group mb-3">
+                    {pageFeedbackList.map((feedback) => {
+                      const isClicked = clickedFeedbackIds.includes(feedback.id);
+                      const listItemStyle = {
+                        backgroundColor: isClicked ? "#f0f0f0" : "transparent",
+                        cursor: 'pointer'
+                      };
 
-                                                    return (
-                                                        <li key={feedback.id} onClick={() => handleFeedbackClick(feedback.id)} style={listItemStyle}>
-                                                            {feedback.email}
-                                                        </li>
-                                                    );
-                                                })}
-                                            </ul>
-                                            <div style={{ display: "flex", justifyContent: "center", marginTop: "30px" }}>
-                                                <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
-                                                    Previous Page
-                                                </button>
-                                                <span style={{ margin: "5px 20px", textAlign: "center" }}>Page {currentPage}</span>
-                                                <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>
-                                                    Next Page
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div style={{ ...styles.feedbackContainer, flex: 1, marginLeft: "20px" }}>
-                                            {selectedFeedback ? (
-                                                <div>
-                                                    <div style={navbarStyle}>
-                                                        <div style={logoStyle}> FEEDBACK DETAILS </div>
-                                                    </div>
-                                                    <div style={para}>
-                                                        <p>Company Address: {selectedFeedback.companyAddress}</p>
-                                                        <p>Email: {selectedFeedback.email}</p>
-                                                        <p>Created at: {new Date(selectedFeedback.createdAt.seconds * 1000).toLocaleDateString()}</p>
-                                                        <p>Message: {selectedFeedback.message}</p>
-                                                        <button onClick={() => handleDeleteFeedback(selectedFeedback.id)}>Delete Feedback</button>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <p style={{ fontFamily: "Georgina", textAlign: "center" }}>Select a feedback entry to view details.</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </MDBCardBody>
-                            </MDBCard>
-                        </MDBCol>
-                    </MDBRow>
-                </MDBContainer>
+                      return (
+                        <li key={feedback.id} onClick={() => handleFeedbackClick(feedback.id)} className="list-group-item" style={listItemStyle}>
+                          {feedback.email}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <div className="d-flex justify-content-center">
+                    <button className="btn btn-primary me-2" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
+                      Previous Page
+                    </button>
+                    <span className="mt-2">{`Page ${currentPage}`}</span>
+                    <button className="btn btn-primary ms-2" onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>
+                      Next Page
+                    </button>
+                  </div>
+                </div>
+                <div className="flex-fill ms-3">
+                  {selectedFeedback ? (
+                    <div>
+                      <div className="bg-primary text-white p-3 mb-3">FEEDBACK DETAILS</div>
+                      <div>
+                        <p>Company Address: {selectedFeedback.companyAddress}</p>
+                        <p>Email: {selectedFeedback.email}</p>
+                        <p>Created at: {new Date(selectedFeedback.createdAt.seconds * 1000).toLocaleDateString()}</p>
+                        <p>Message: {selectedFeedback.message}</p>
+                        <button className="btn btn-danger" onClick={() => handleDeleteFeedback(selectedFeedback.id)}>Delete Feedback</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-center">Select a feedback entry to view details.</p>
+                  )}
+                </div>
+              </div>
+            </MDBCardBody>
+          </MDBCard>
+        </MDBCol>
+      </MDBRow>
+    </MDBContainer>
             </div>
 
 

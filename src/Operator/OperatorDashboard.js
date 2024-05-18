@@ -7,6 +7,7 @@ import { DropdownButton, Dropdown } from 'react-bootstrap';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { FaUserCircle, FaCar, FaParking, FaRegListAlt } from "react-icons/fa";
+import { FaUserCircle, FaCar, FaParking, FaRegListAlt } from "react-icons/fa";
 import { faCar, faCoins, faUser, faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons';
 import { db } from "../config/firebase";
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
@@ -376,12 +377,8 @@ function OperatorDashboard() {
             <OperatorReserve />
           </MDBCol>
           <MDBCol lg="8">
-            <div className="mb-4">
-              <p style={styles.overviewText}>Total Parking Spaces: {totalSlots}</p>
-              <p style={styles.overviewText2}>Available Spaces: {totalSlots - occupiedSpaces}</p>
-            </div>
             <div className="summary-cards">
-              {summaryCardsData.filter(card => card.title !== 'Total Parking Spaces' && card.title !== 'Available Spaces').map(card => (
+              {summaryCardsData.map(card => (
                 <div key={card.title} className={`card card-${card.cardType}`} 
                      onClick={() => card.clickable ? handleCardClick(card.cardType) : null} 
                      style={card.clickable ? (activeCard === card.cardType ? { ...styles.card, ...styles.activeCard } : styles.card) : styles.nonClickableCard}>

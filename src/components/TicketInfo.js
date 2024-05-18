@@ -7,6 +7,8 @@ import { faCar, faCoins, faUser, faFileInvoiceDollar } from '@fortawesome/free-s
 import { db } from '../config/firebase';
 import { collection, onSnapshot, Timestamp, where, getDocs, query} from 'firebase/firestore';
 import UserContext from '../UserContext';
+import { MDBCardImage } from "mdb-react-ui-kit";
+    
 
 function TicketInfo() {
 
@@ -107,63 +109,37 @@ function TicketInfo() {
       backgroundColor: '#5F9EA0', // Set a background color in case the image is not fully loaded
     }}>
 
-<div className="dashboard-container"></div>
-    <div style={{fontFamily:'Georgina', fontSize:'20px'}}>
-      <nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: "#003851", marginBottom:'20px' }}>
-        <div className="container">
-          <Link className="navbar-brand" to="/Dashboard">
-            SpotWise Parking Management System
-          </Link>
-    <p style={styles.welcomeMessage}>
-      <DropdownButton
-        alignRight
-        variant="outline-light"
-        title={<FaUserCircle style={styles.icon} />}
-        id="dropdown-menu"
-      >
-              <Dropdown.Item href="Dashboard"><img
-                        src="dashboard.jpg"
-                        alt="Operator Dashboard Logo"
-                        style={{ width: '20px', marginRight: '10px'}}
-                      />Dashboard</Dropdown.Item>
-              <Dropdown.Item href="AgentSchedule"><img
-                        src="calendar.webp"
-                        alt="Agent Schedule"
-                        style={{ width: '20px', marginRight: '10px'}}
-                      />Agent Schedule </Dropdown.Item> 
-              <Dropdown.Item href="AgentRegistration"><img
-                        src="registerA.jpg"
-                        alt="Agent Register"
-                        style={{ width: '20px', marginRight: '10px'}}
-                      />Register Ticket Operator</Dropdown.Item> 
-              <Dropdown.Item href="Tracks"><img
-                        src="management.jpg"
-                        alt="Management Details"
-                        style={{ width: '20px', marginRight: '10px'}}
-                      />Management Details</Dropdown.Item>
-              <Dropdown.Item href="Profiles"><img
-                        src="pofile.jpg"
-                        alt="Management Details"
-                        style={{ width: '20px', marginRight: '10px'}}
-                      />View Profile</Dropdown.Item>
-              <Dropdown.Item href="OperatorDashboard"><img
-                        src="feedback.jpg"
-                        alt="Parking Info"
-                        style={{ width: '20px', marginRight: '10px'}}
-                      />Feedback</Dropdown.Item> 
-              <Dropdown.Divider />
-                <Dropdown.Item href="/"><img
-                        src="logout.png"
-                        alt="Operator Logout Logo"
-                        style={{ width: '20px', marginRight: '10px'}}
-                      />Logout</Dropdown.Item>
-              </DropdownButton>
-            </p>
-          </div>
-        </nav>
-        <div className="row mt-3">
-          <div className="col-md-3">
-          </div>
+<div className="admin-dashboard"> {/* Adjusted marginTop to account for navbar */}
+        <div className="sidebar">
+            <div className="admin-container">
+            </div>
+            <div class="wrapper">
+                <div class="side">
+                    <div>
+                              
+                                </div>            
+                    <h2>Menu</h2>
+                    <ul>
+                        <li><a href="Dashboard"><i class="fas fa-home"></i>Home</a></li>
+                        <li><a href='AgentRegistration'><i class="fas fa-user"></i>Account Management</a></li>
+                        <li><a href='TicketInfo'><i class="fas fa-address-card"></i>Ticket Management</a></li>
+                        <li><a href='Tracks'><i class="fas fa-project-diagram"></i>Management Details</a></li>
+                        <li><a href="Profiles"><i class="fas fa-blog"></i>Profile</a></li>
+                        <li><a href="Feedback"><i class="fas fa-blog"></i>Feedback</a></li>
+                        <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
+                    </ul>
+
+                    
+                </div>
+                
+            </div>
+            <nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: '#132B4B', position: "fixed", width: "500vh", marginLeft: '-150vh',height: '15%', marginTop: '-8%'}}>
+<div className="container">
+    <Link className="navbar-brand" to="/Dashboard" style={{ fontSize: "25px"}}>
+    </Link>
+</div>
+</nav>
+</div>
           <div className="col-md-3">
             <Card >
               <Card.Body>
@@ -219,7 +195,6 @@ function TicketInfo() {
             </tbody>
           </Table>
           )}
-        </div>
         </div>
     </section>           
     );
