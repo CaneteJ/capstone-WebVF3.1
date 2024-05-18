@@ -587,41 +587,54 @@ const Reservation = () => {
               <div className="p-2">{request.floorTitle}</div>
               <div className="p-2">{request.slotId + 1}</div>
             </div>
-      
-            {/* MA CLICK NGA ICON SA MAP */}
-            <Button variant="primary" onClick={toggleMapModal}>
-              <i className="bi bi-geo-alt"></i> View Map
+        {/* MA CLICK NGA ICON SA MAP */}
+        <Button variant="primary" onClick={toggleMapModal}>
+          <i className="bi bi-geo-alt"></i> View Map
+        </Button>
+
+        {/* PARA SA MAP*/}
+        <Modal show={showMapModal} onHide={toggleMapModal} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Map</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {/* <img
+              src={`https://maps.googleapis.com/maps/api/staticmap?center=${request.latitude},${request.longitude}&zoom=14&size=600x300&maptype=roadmap&markers=color:red%7Clabel:S%7C${request.latitude},${request.longitude}&key=YOUR_API_KEY`}
+              alt="Map"
+              style={{ width: "100%", height: "auto" }}
+            /> */}
+            {request?.location && user.coordinates && (
+              <MapComponent
+                origin={request.location}
+                destination={user.coordinates}
+              />
+            )}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={toggleMapModal}>
+              Close
             </Button>
-      
-            {/* PARA SA MAP*/}
-            <Modal show={showMapModal} onHide={toggleMapModal} centered>
-              <Modal.Header closeButton>
-                <Modal.Title>Map</Modal.Title>
-              </Modal.Header>
-              <Modal.Body>
-                <img
-                  src={`https://maps.googleapis.com/maps/api/staticmap?center=${request.latitude},${request.longitude}&zoom=14&size=600x300&maptype=roadmap&markers=color:red%7Clabel:S%7C${request.latitude},${request.longitude}&key=YOUR_API_KEY`}
-                  alt="Map"
-                  style={{ width: '100%', height: 'auto' }}
-                />
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="secondary" onClick={toggleMapModal}>Close</Button>
-              </Modal.Footer>
-            </Modal>
-      
-            {/* Buttons */}
-            <div className="d-flex flex-row align-items-center mt-2">
-              <button className="btn btn-success mr-2" onClick={() => handleReservation(true, request, index)}>
-                Accept Reservation
-              </button>
-              <button className="btn btn-danger" onClick={() => handleReservation(false, request, index)}>
-                Decline Reservation
-              </button>
-            </div>
-          </div>
-        );
-      };
+          </Modal.Footer>
+        </Modal>
+
+        {/* Buttons */}
+        <div className="d-flex flex-row align-items-center mt-2">
+          <button
+            className="btn btn-success mr-2"
+            onClick={() => handleReservation(true, request, index)}
+          >
+            Accept Reservation
+          </button>
+          <button
+            className="btn btn-danger"
+            onClick={() => handleReservation(false, request, index)}
+          >
+            Decline Reservation
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div>
