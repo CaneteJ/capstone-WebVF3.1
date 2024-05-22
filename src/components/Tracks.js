@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Container, Table, Button, Row, Col } from "react-bootstrap";
-import { db } from "../config/firebase";
+import { db, auth } from "../config/firebase";
 import { collection, onSnapshot, Timestamp, where, getDocs, query } from "firebase/firestore";
 import { DropdownButton, Dropdown } from "react-bootstrap";
 import { FaUserCircle } from "react-icons/fa";
@@ -9,7 +9,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { MDBCol, MDBContainer, MDBRow, MDBCard, MDBCardText, MDBCardBody, MDBCardImage, MDBListGroup, MDBListGroupItem } from "mdb-react-ui-kit";
 import UserContext from "../UserContext";
 import { MDBBtn, MDBTable } from 'mdb-react-ui-kit';
-
+import {  doc, getDoc } from "firebase/firestore";
 const listItemStyle = {
     display: "flex",
     justifyContent: "space-between",
@@ -38,6 +38,22 @@ const App = () => {
     const [revenue, setRevenue] = useState([]);
     const [loading, setLoading] = useState(true);
     const [slotData, setSlotData] = useState([]);
+    const userDocRef = auth.currentUser ? doc(db, "establishments", auth.currentUser.uid) : null;
+    useEffect(() => {
+      if (userDocRef) {
+          const fetchImageUrl = async () => {
+              const docSnap = await getDoc(userDocRef);
+              if (docSnap.exists()) {
+                  const userData = docSnap.data();
+                  setProfileImageUrl(userData.profileImageUrl);
+              } else {
+                  console.log("No such document!");
+              }
+          };
+
+          fetchImageUrl().catch(console.error);
+      }
+  }, [userDocRef]);
     const handleViewProfile = () => {
         navigate("/Profiles");
     };
@@ -224,10 +240,7 @@ const App = () => {
                         <div className="side">
                             <div>
                                 {profileImageUrl ? <MDBCardImage src={profileImageUrl} alt="Operator Profile Logo" className="rounded-circle" style={{ width: "70px"}} fluid /> : <MDBCardImage src="default_placeholder.jpg" alt="Default Profile Logo" className="rounded-circle" style={{ width: "70px", marginTop: '-6vh' }} fluid />}
-                                <p style={{ fontFamily: "Georgina", fontSize: "20px", border: "white", fontWeight: "bold", colo: 'white'}}>Administrator</p>
-                                <p style={{ fontFamily: "Georgina", color: "white", fontWeight: "bold", fontSize: 12, marginTop: -15}}>
-                                    {managementName}                 
-                                </p>
+                                <p style={{ fontFamily: "Georgina", fontSize: "20px", border: "white", fontWeight: "bold", colo: 'white'}}>{managementName}</p>
                             </div>            
                             <h2>Menu</h2>
                             <ul>

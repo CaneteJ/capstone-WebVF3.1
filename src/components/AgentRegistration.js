@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext,  useEffect } from "react";
 import { db, auth } from "../config/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { setDoc, collection, doc, getDoc } from "firebase/firestore";
@@ -24,7 +24,23 @@ function CreateAccount() {
     const [managementName, setManagementName] = useState(user.managementName);
     const [companyContact, setCompanyContact] = useState(user.contact);
     const [selectedRadioOption, setSelectedRadioOption] = useState("");
-    const [profileImageUrl, setProfileImageUrl] = useState("");
+    const [profileImageUrl, setProfileImageUrl] = useState('');
+    const userDocRef = auth.currentUser ? doc(db, "establishments", auth.currentUser.uid) : null;
+    useEffect(() => {
+      if (userDocRef) {
+          const fetchImageUrl = async () => {
+              const docSnap = await getDoc(userDocRef);
+              if (docSnap.exists()) {
+                  const userData = docSnap.data();
+                  setProfileImageUrl(userData.profileImageUrl);
+              } else {
+                  console.log("No such document!");
+              }
+          };
+
+          fetchImageUrl().catch(console.error);
+      }
+  }, [userDocRef]);
     const listItemStyle = {
         display: "flex",
         justifyContent: "space-between",
@@ -153,6 +169,8 @@ function CreateAccount() {
         fontSize: "18px",
     };
 
+    
+
     return (
         
         <section>
@@ -164,11 +182,8 @@ function CreateAccount() {
             <div class="wrapper">
                 <div class="side">
                     <div>
-                                {profileImageUrl ? <MDBCardImage src={profileImageUrl} alt="Operator Profile Logo" className="rounded-circle" style={{ width: "70px"}} fluid /> : <MDBCardImage src="default_placeholder.jpg" alt="Default Profile Logo" className="rounded-circle" style={{ width: "70px", marginTop: '-6vh' }} fluid />}
-                                <p style={{ fontFamily: "Georgina", fontSize: "20px", border: "white", fontWeight: "bold", colo: 'white'}}>Administrator</p>
-                                <p style={{ fontFamily: "Georgina", color: "white", fontWeight: "bold", fontSize: 12, marginTop: -15}}>
-                                    {managementName}                 
-                                </p>
+                    {profileImageUrl ? <MDBCardImage src={profileImageUrl} alt="Operator Profile Logo" className="rounded-circle" style={{ width: "70px"}} fluid /> : <MDBCardImage src="default_placeholder.jpg" alt="Default Profile Logo" className="rounded-circle" style={{ width: "70px", marginTop: '-6vh' }} fluid />}
+                                <p style={{ fontFamily: "Georgina", fontSize: "20px", border: "white", fontWeight: "bold", colo: 'white'}}> {managementName}</p>
                                 </div>            
                     <h2>Menu</h2>
                     <ul>

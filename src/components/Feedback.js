@@ -15,8 +15,24 @@ const FeedbackPage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [clickedFeedbackIds, setClickedFeedbackIds] = useState([]);
     const itemsPerPage = 5;
-
+    const [profileImageUrl, setProfileImageUrl] = useState('');
     const [managementName, setManagementName] = useState(null);
+    const userDocRef = auth.currentUser ? doc(db, "establishments", auth.currentUser.uid) : null;
+    useEffect(() => {
+      if (userDocRef) {
+          const fetchImageUrl = async () => {
+              const docSnap = await getDoc(userDocRef);
+              if (docSnap.exists()) {
+                  const userData = docSnap.data();
+                  setProfileImageUrl(userData.profileImageUrl);
+              } else {
+                  console.log("No such document!");
+              }
+          };
+
+          fetchImageUrl().catch(console.error);
+      }
+  }, [userDocRef]);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -167,10 +183,8 @@ const FeedbackPage = () => {
                 <div class="side">
                     <div>
                               
-                                <p style={{ fontFamily: "Georgina", fontSize: "20px", border: "white", fontWeight: "bold", colo: 'white'}}>Administrator</p>
-                                <p style={{ fontFamily: "Georgina", color: "white", fontWeight: "bold", fontSize: 12, marginTop: -15}}>
-                                    {managementName}                 
-                                </p>
+                    {profileImageUrl ? <MDBCardImage src={profileImageUrl} alt="Operator Profile Logo" className="rounded-circle" style={{ width: "70px"}} fluid /> : <MDBCardImage src="default_placeholder.jpg" alt="Default Profile Logo" className="rounded-circle" style={{ width: "70px", marginTop: '-6vh' }} fluid />}
+                                <p style={{ fontFamily: "Georgina", fontSize: "20px", border: "white", fontWeight: "bold", colo: 'white'}}>{managementName}</p>
                                 </div>            
                     <h2>Menu</h2>
                     <ul>
