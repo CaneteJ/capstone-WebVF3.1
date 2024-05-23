@@ -184,6 +184,21 @@ const App = () => {
         fetchSlotData();
     }, []);
 
+    const formatDateAndTime = (timestamp) => {
+        if (!timestamp) {
+            return 'No Timestamp';
+        }
+        // Check if timestamp is a Firestore Timestamp
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        if (isNaN(date.getTime())) { // Check if the date is valid
+            return 'Invalid Date';
+        } else {
+            // Options to format the date in a 'Month day, year, time' format
+            const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+            return date.toLocaleString('en-US', options); // 'en-US' can be adjusted to your locale
+        }
+    };
+
     useEffect(() => {
         const fetchEstablishment = async () => {
             if (!user || !user.managementName) {
@@ -330,9 +345,9 @@ const App = () => {
                                          
                                             <td>{slot.userDetails.name}</td>
                                             <td>{slot.userDetails.floorTitle}</td>
-                                            <td>{slot.userDetails.slotId}</td>
+                                            <td>{slot.userDetails.slotId + 1}</td>
                                             <td>{slot.status}</td>
-                                            <td>{slot.timestamp && new Date(slot.timestamp.seconds * 1000).toLocaleString()}</td>
+                                            <td>{formatDateAndTime(slot.userDetails.timestamp)}</td>
                                         </tr>
                                     ))}
                                 </tbody>

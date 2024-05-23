@@ -45,108 +45,13 @@ function OperatorDashboard() {
   const [parkingLogs, setParkingLogs] = useState([]);
   const [reserveLogs, setReserveLogs] = useState([]);
   const [availableLogs, setAvailableLogs] = useState([]);
-  const [availableSpaces, setAvailableSpaces] = useState(0);
+  const [availableSlots, setAvailableSlots] = useState(0);
   const [reservedSpaces, setReservedSpaces] = useState(0);
   const totalRevenues = totalUsers * parkingPay;
   const navigate = useNavigate();
   const location = useLocation();
 
   const styles = {
-    welcomeMessage: {
-      position: "absolute",
-      top: "10px",
-      right: "10px",
-      margin: "0",
-      color: "#fff",
-      fontFamily: "Rockwell, sans-serif",
-      textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)",
-    },
-    icon: {
-      marginRight: "5px",
-    },
-    nonClickableCard: {
-      cursor: 'default',
-      boxShadow: 'none',
-    },
-    occupiedSection: {
-      backgroundColor: "#ffcccb", // Light red
-      color: "#d63384", // Bootstrap pink
-      border: "3px solid #d63384",
-      borderRadius: "8px",
-      marginBottom: "20px",
-      padding: "10px",
-      cursor: 'pointer',
-      transition: 'transform 0.2s, box-shadow 0.2s',
-      boxShadow: activeCard === 'occupied' ? '0 8px 16px rgba(0, 0, 0, 0.2)' : '0 4px 8px rgba(0, 0, 0, 0.1)',
-    },
-    reserveSection: {
-      backgroundColor: "#b2fab4", // Light green
-      color: "#0d6efd", // Bootstrap blue
-      border: "3px solid #0d6efd",
-      borderRadius: "8px",
-      marginBottom: "20px",
-      padding: "10px",
-      cursor: 'pointer',
-      transition: 'transform 0.2s, box-shadow 0.2s',
-      boxShadow: activeCard === 'reserve' ? '0 8px 16px rgba(0, 0, 0, 0.2)' : '0 4px 8px rgba(0, 0, 0, 0.1)',
-    },
-    sectionHeader: {
-      fontWeight: "bold",
-      fontSize: "18px",
-      marginBottom: "10px",
-    },
-    badgeOccupied: {
-      backgroundColor: "#dc3545", // Bootstrap red
-    },
-    badgeReserved: {
-      backgroundColor: "#ffc107", // Bootstrap yellow
-    },
-    card: {
-      borderRadius: '15px',
-      transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease',
-      cursor: 'pointer',
-      margin: '10px',
-    },
-    activeCard: {
-      transform: 'scale(1.05)',
-      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-      border: '2px solid #007bff',
-    },
-    inactiveCard: {
-      opacity: '0.7',
-    },
-    cardContent: {
-      padding: '10px',
-    },
-    cardImage: {
-      height: '100px',
-      margin: 'auto',
-      display: 'block',
-    },
-    cardTitle: {
-      fontWeight: 'bold',
-      textAlign: 'center',
-      marginTop: '10px',
-    },
-    cardValue: {
-      textAlign: 'center',
-    },
-    overviewText: {
-      fontFamily:'Copperplate',
-      fontWeight: 'bold',
-      marginBottom: '10px',
-      textAlign: 'center',
-      fontSize: '18px',
-      color: 'gray',
-    },
-    overviewText2: {
-      fontFamily:'Copperplate',
-      fontWeight: 'bold',
-      marginBottom: '10px',
-      textAlign: 'center',
-      fontSize: '18px',
-      color: 'green',
-    }
   };
 
   useEffect(() => {
@@ -154,15 +59,10 @@ function OperatorDashboard() {
       try {
         const q = query(collection(db, 'establishments'), where('managementName', '==', user.managementName));
         const querySnapshot = await getDocs(q);
-        console.log(`Found ${querySnapshot.docs.length} documents`);
-  
         if (!querySnapshot.empty) {
           const establishmentData = querySnapshot.docs[0].data();
-          console.log('Establishment Data:', establishmentData);
           setParkingPay(establishmentData.parkingPay);
           setTotalSlots(establishmentData.totalSlots);
-        } else {
-          console.log('No matching establishment found!');
         }
       } catch (error) {
         console.error('Error fetching establishment data:', error);
@@ -171,56 +71,74 @@ function OperatorDashboard() {
   
     if (user && user.managementName) {
       fetchEstablishmentData();
+      fetchParkingSlots(user.managementName);
+      fetchOccupiedAndReservedSlotData(); // Combined function to fetch both
     }
   }, [user]);
 
-  useEffect(() => {
-    if (user && user.managementName) {
-      if (activeCard === 'occupied') {
-        fetchOccupiedSlotData();
-      } else if (activeCard === 'reserve') {
-        fetchReservedSlotData();
-      }
+  const formatDateAndTime = (timestamp) => {
+    if (!timestamp) {
+      return 'No Timestamp';
     }
-  }, [user, activeCard]);
-
-  const fetchOccupiedSlotData = async () => {
-    try {
-      const currentUserManagementName = user.managementName;
-      const logsCollectionRef = collection(db, 'slot', currentUserManagementName, 'slotData');
-      const q = query(logsCollectionRef, where("status", "==", "Occupied"));
+    // Check if timestamp is a Firestore Timestamp
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    if (isNaN(date.getTime())) { // Check if the date is valid
+      return 'Invalid Date';
+    } else {
+      // Options to format the date in a 'Month day, year, time' format
+      const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+      return date.toLocaleString('en-US', options); // 'en-US' can be adjusted to your locale
+    }
+  };
   
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-        const slots = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setParkingLogs(slots);
-        setOccupiedSpaces(slots.length);
-        console.log(`Occupied slots fetched: ${slots.length}`);
-      } else {
-        console.log("No occupied slots found");
+
+  const fetchParkingSlots = async (managementName) => {
+    try {
+      const establishmentQuery = query(collection(db, "establishments"), where("managementName", "==", managementName));
+      const establishmentSnapshot = await getDocs(establishmentQuery);
+      if (establishmentSnapshot.empty) {
+        return;
       }
+
+      let totalSlots = 0;
+      establishmentSnapshot.forEach(doc => {
+        totalSlots = doc.data().totalSlots;
+      });
+
+      const slotDataQuery = query(collection(db, `slot/${managementName}/slotData`));
+      const slotDataSnapshot = await getDocs(slotDataQuery);
+      const occupiedSlots = slotDataSnapshot.size;
+
+      const available = totalSlots - occupiedSlots;
+      setAvailableSlots(available);
     } catch (error) {
-      console.error("Error fetching occupied slot data: ", error);
+      console.error("Error fetching parking data: ", error);
+      setAvailableSlots(0);
     }
   };
 
-  const fetchReservedSlotData = async () => {
+  // Combined function to update both occupied and reserved slots
+  const fetchOccupiedAndReservedSlotData = async () => {
     try {
       const currentUserManagementName = user.managementName;
       const logsCollectionRef = collection(db, 'slot', currentUserManagementName, 'slotData');
-      const q = query(logsCollectionRef, where("from", "==", "Reservation"));
-  
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-        const slots = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setReserveLogs(slots);
-        setReservedSpaces(slots.length);
-        console.log(`Reserved slots fetched: ${slots.length}`);
-      } else {
-        console.log("No reserved slots found");
-      }
+      
+      const querySnapshot = await getDocs(logsCollectionRef);
+      const slots = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // Filter for occupied slots
+      const occupiedSlots = slots.filter(slot => slot.status === "Occupied");
+      setParkingLogs(occupiedSlots);
+      setOccupiedSpaces(occupiedSlots.length);
+
+      // Filter for reserved slots
+      const reservedSlots = slots.filter(slot => slot.from === "Reservation");
+      setReserveLogs(reservedSlots);
+      setReservedSpaces(reservedSlots.length);
     } catch (error) {
-      console.error("Error fetching reserved slot data: ", error);
+      console.error("Error fetching slot data: ", error);
+      setOccupiedSpaces(0);
+      setReservedSpaces(0);
     }
   };
 
@@ -230,6 +148,7 @@ function OperatorDashboard() {
       setEstablishments(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     };
     fetchEstablishments();
+
     const fetchPendingAccounts = async () => {
       const querySnapshot = await getDocs(query(collection(db, "pendingEstablishments")));
       setPendingAccounts(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -248,7 +167,7 @@ function OperatorDashboard() {
       },
       { 
         title: 'Available Spaces', 
-        value: `${totalSlots - occupiedSpaces} Available Spaces`,
+        value: `${availableSlots} Available Spaces`,
         imgSrc: 'available.png', 
         cardType: 'available', 
         clickable: false 
@@ -262,16 +181,15 @@ function OperatorDashboard() {
       },
       { 
         title: 'Reserve Spaces', 
-        value: `${reservedSpaces} Reserve Spaces`,
+        value: `${reservedSpaces} Reserved Spaces`,
         imgSrc: 'reservedP.png', 
         cardType: 'reserve', 
         clickable: true 
       },
     ]);
-  }, [totalSlots, occupiedSpaces, pendingAccounts, establishments, parkingSeeker, agent]);
+  }, [totalSlots, availableSlots, occupiedSpaces, reservedSpaces]);
 
   const handleCardClick = (cardType) => {
-    console.log(`Card clicked: ${cardType}`);
     setActiveCard(activeCard === cardType ? '' : cardType);
   };
 
@@ -289,28 +207,20 @@ function OperatorDashboard() {
                   <th>Floor</th>
                   <th>Slot Number</th>
                   <th>Status</th>
+                  <th>Time</th>
                 </tr>
               </thead>
               <tbody>
                 {parkingLogs.map((log, index) => (
                   <tr key={index}>
-                    <td>
-                      <div className="d-flex align-items-center">
-                        <div className="ms-3">
-                          <p className="fw-bold mb-1">{log.userDetails.name}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p className="text-muted mb-0">{log.userDetails.carPlateNumber}</p>
-                    </td>
+                    <td>{log.userDetails.name}</td>
+                    <td>{log.userDetails.carPlateNumber}</td>
                     <td>{log.userDetails.floorTitle}</td>
+                    <td>{log.userDetails.slotId + 1}</td>
                     <td>
-                      <p className="fw-normal mb-1">{log.userDetails.slotId + 1}</p>
+                    {log.from === 'Reservation' ? log.from : log.status}
                     </td>
-                    <td>
-                      <span className="badge badge-success rounded-pill d-inline" style={styles.badgeOccupied}>{log.status}</span>
-                    </td>
+                    <td>{formatDateAndTime(log.userDetails.timestamp || log.timestamp)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -329,28 +239,20 @@ function OperatorDashboard() {
                   <th>Floor</th>
                   <th>Slot Number</th>
                   <th>Status</th>
+                  <th>Time</th>
                 </tr>
               </thead>
               <tbody>
                 {reserveLogs.map((log, index) => (
                   <tr key={index}>
-                    <td>
-                      <div className="d-flex align-items-center">
-                        <div className="ms-3">
-                          <p className="fw-bold mb-1">{log.userDetails.name}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p className="text-muted mb-0">{log.userDetails.carPlateNumber}</p>
-                    </td>
+                    <td>{log.userDetails.name}</td>
+                    <td>{log.userDetails.carPlateNumber}</td>
                     <td>{log.userDetails.floorTitle}</td>
+                    <td>{log.userDetails.slotId + 1}</td>
                     <td>
-                      <p className="fw-normal mb-1">{log.userDetails.slotId + 1}</p>
+                      {log.from}
                     </td>
-                    <td>
-                      <span className="badge badge-warning rounded-pill d-inline" style={styles.badgeReserved}>{log.status}</span>
-                    </td>
+                    <td>{formatDateAndTime(log.timestamp)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -361,6 +263,8 @@ function OperatorDashboard() {
         return null;
     }
   };
+  
+  
 
   return (
     <div className="gradient-custom-2" style={{ backgroundColor: 'white' }}>

@@ -21,6 +21,7 @@ export default function EditButton() {
     const [closeTime, setCloseTime] = useState("");
     const [profileImageUrl, setProfileImageUrl] = useState("");
     const [imageUpload, setImageUpload] = useState(null);
+    const [parkingPay, setParkingPay] = useState("");
 
     // Temporary state to hold the editable values
     const [tempOpenTime, setTempOpenTime] = useState("");
@@ -40,7 +41,7 @@ export default function EditButton() {
                     setAddress(userData.address || user.companyAddress || "");
                     setCompanyContact(userData.contact || user.contact || "");
                     setCompanyEmail(userData.email || user.email || "");
-
+                    setParkingPay(userData.parkingPay || user.parkingPay || "");
                     // Update only if they haven't been edited yet
                     if (!isEditing) {
                         setOpenTime(userData.openTime || "");
@@ -92,9 +93,11 @@ export default function EditButton() {
                 email: companyEmail,
                 openTime: tempOpenTime,
                 closeTime: tempCloseTime,
+                parkingPay: parkingPay,
                 profileImageUrl: imageUrl
             };
 
+            // Remove any fields that are empty or undefined
             Object.keys(updatedData).forEach(key => {
                 if (updatedData[key] === undefined || updatedData[key] === null || updatedData[key] === "") {
                     delete updatedData[key];
@@ -105,6 +108,7 @@ export default function EditButton() {
                 await updateDoc(userDocRef, updatedData);
                 console.log("User data updated/created successfully!");
                 console.log("Updated profile image URL:", imageUrl);
+                setIsEditing(false);  // Exit edit mode after successful update
             } catch (error) {
                 console.error("Error updating user data: ", error);
             }
@@ -128,7 +132,6 @@ export default function EditButton() {
         }
 
         await updateUserData(finalImageUrl);
-        setIsEditing(false);
     };
 
     const toggleEditing = () => {
@@ -204,6 +207,9 @@ export default function EditButton() {
                                                 <input type="email" className="form-control" placeholder="Email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)} />
                                             </div>
                                             <div className="mb-3">
+                                                <input type="text" className="form-control" placeholder="Parking Pay" value={parkingPay} onChange={(e) => setParkingPay(e.target.value)} />
+                                            </div>
+                                            <div className="mb-3">
                                                 <input type="tel" className="form-control" placeholder="Contact Number" value={companyContact} onChange={(e) => setCompanyContact(e.target.value)} />
                                             </div>
                                             <div className="mb-3">
@@ -226,6 +232,7 @@ export default function EditButton() {
                                             <h4 className="card-title mb-4">{name}</h4>
                                             <p className="card-text mb-1">Location: {address}</p>
                                             <p className="card-text mb-1">Email: {companyEmail}</p>
+                                            <p className="card-text mb-1">Parking Fee: {parkingPay}</p>
                                             <p className="card-text mb-1">Contact Number: {companyContact}</p>
                                             <p className="card-text mb-1">Open Time: {openTime || "Not Set"}</p>
                                             <p className="card-text mb-1">Close Time: {closeTime || "Not Set"}</p>
