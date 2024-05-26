@@ -31,6 +31,7 @@ import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import MapComponent from "../components/Map";
 
+
 const Reservation = () => {
 
     const { user } = useContext(UserContext);
@@ -50,8 +51,7 @@ const Reservation = () => {
     const [parkingSeeker, setParkingSeeker] = useState([]);
     const [summaryCardsData, setSummaryCardsData] = useState([]);
     const [agent, setAgent] = useState([]);    
-
-  
+    
     useEffect(() => {
         const unsubscribe = onSnapshot(collection(db, 'notifications'), (snapshot) => {
           snapshot.docChanges().forEach((change) => {
@@ -109,6 +109,7 @@ const Reservation = () => {
             slot: typeof slotId === "string" ? slotId.slice(1) : "N/A",
             slotId: slotId,
                     floorTitle,
+                    userEmail,
             timeOfRequest: new Date(
               reservationDoc.data().timestamp.seconds * 1000
             ).toLocaleTimeString("en-US", {
@@ -163,6 +164,18 @@ const Reservation = () => {
     return previousSlots + index + 1;
   };
 
+  const fetchSubIdByEmail = async (email) => {
+    // Implement the logic to fetch the sub_id from Native Notify or your local mapping
+    // This is a placeholder function. You need to replace it with actual logic.
+    // Example:
+    const response = await fetch(`https://aapp.nativenotify.com/api/indie/notification/get-sub-id?email=${encodeURIComponent(email)}`, {
+        headers: {
+            'Authorization': 'Bearer YOUR_API_KEY'
+        }
+    });
+    const data = await response.json();
+    return data.sub_id; // assuming the response contains `sub_id`
+};
     const handleReservation = async (accepted, reservationRequest, index) => {
         const { id, userName, carPlateNumber, slotId, timeOfRequest, floorTitle, userToken, userEmail } = reservationRequest;
         const status = accepted ? "Accepted" : "Declined";
@@ -198,6 +211,53 @@ const Reservation = () => {
     
                 const reservationDocRef = doc(db, "reservations", id);
                 await deleteDoc(reservationDocRef);
+                if (userEmail) {
+                  const notificationData = {
+                      appId: 21460,
+                      appToken: 'rLQ1cRoXNKwLkZE4aWOyKw',
+                      title: 'Reservation',
+                      message: `Your reservation at ${user.managementName} on ${floorTitle} ${slotId + 1} is accepted`,
+                      targetUsers: [userEmail] , // This will now only include valid email addresses
+                      subID: userEmail,
+                      color: '#FF0000FF'
+                  };
+              
+                  console.log("Sending notification with data:", JSON.stringify(notificationData));
+              
+                  fetch('https://app.nativenotify.com/api/indie/notification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${notificationData.appToken}`
+                    },
+                    body: JSON.stringify(notificationData)
+                })
+                .then(response => response.text()) // Get the response as text
+                .then(text => {
+                    if (text === "Success!") {
+                        console.log('Notification sent successfully:', text);
+                        alert('Notification sent successfully.');
+                    } else {
+                        try {
+                            // Attempt to parse as JSON if the response isn't the plain "Success!"
+                            const data = JSON.parse(text);
+                            console.log('Notification sent:', data);
+                            alert('Notification sent successfully.');
+                        } catch (error) {
+                            console.error('Response received but not in expected format:', text);
+                            alert(`Received unexpected response format. Response was: ${text}`);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending notification:', error);
+                    alert('Failed to send notification. Check the console for more details.');
+                });
+
+              } else {
+                  console.error("Error: userEmail is null or undefined.");
+                  alert("No valid email to send notification.");
+              }
     
                 console.log(`Reservation accepted for slot ${slotId}.`);
                 alert(`Reservation accepted for ${userName} at slot ${slotId + 1}.`);
@@ -215,7 +275,7 @@ const Reservation = () => {
                     resStatus: "Accepted",
                     managementName: user.managementName,
                 }, { merge: true });
-    
+              
             } catch (error) {
                 console.error("Error accepting reservation and updating slotData:", error);
                 alert("Failed to accept the reservation. Please try again.");
@@ -224,10 +284,10 @@ const Reservation = () => {
             try {
                 const reservationDocRef = doc(db, "reservations", id);
                 await setDoc(reservationDocRef, { status: "Declined" }, { merge: true });
-    
+
                 console.log(`Reservation declined for ${userName}.`);
                 alert(`Reservation declined for ${userName}.`);
-    
+              
                 const resStatusDocRef = doc(collection(db, "resStatus"));
                 await setDoc(resStatusDocRef, {
                     userName,
@@ -240,12 +300,59 @@ const Reservation = () => {
                     resStatus: "Declined",
                     managementName: user.managementName,
                 });
+                await deleteDoc(reservationDocRef);
+                if (userEmail) {
+                  const notificationData = {
+                      appId: 21460,
+                      appToken: 'rLQ1cRoXNKwLkZE4aWOyKw',
+                      title: 'Reservation',
+                      message: `Your reservation at ${user.managementName} on ${floorTitle} ${slotId + 1} was declined`,
+                      targetUsers: [userEmail] , // This will now only include valid email addresses
+                      subID: userEmail
+                  };
+              
+                  console.log("Sending notification with data:", JSON.stringify(notificationData));
+              
+                  fetch('https://app.nativenotify.com/api/indie/notification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${notificationData.appToken}`
+                    },
+                    body: JSON.stringify(notificationData)
+                })
+                .then(response => response.text()) // Get the response as text
+                .then(text => {
+                    if (text === "Success!") {
+                        console.log('Notification sent successfully:', text);
+                        alert('Notification sent successfully.');
+                    } else {
+                        try {
+                            // Attempt to parse as JSON if the response isn't the plain "Success!"
+                            const data = JSON.parse(text);
+                            console.log('Notification sent:', data);
+                            alert('Notification sent successfully.');
+                        } catch (error) {
+                            console.error('Response received but not in expected format:', text);
+                            alert(`Received unexpected response format. Response was: ${text}`);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending notification:', error);
+                    alert('Failed to send notification. Check the console for more details.');
+                });
+
+              } else {
+                  console.error("Error: userEmail is null or undefined.");
+                  alert("No valid email to send notification.");
+              }
+                
             } catch (error) {
                 console.error("Error updating reservation status:", error);
                 alert("Failed to update the reservation status. Please try again.");
             }
         }
-    
         const updatedRequests = reservationRequests.filter((_, i) => i !== index);
         setReservationRequests(updatedRequests);
     
