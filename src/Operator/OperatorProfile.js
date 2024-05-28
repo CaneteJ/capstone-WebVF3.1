@@ -1,8 +1,5 @@
-import React, { useState, useEffect, useContext} from 'react';
-import { DropdownButton, Dropdown } from 'react-bootstrap';
+import React, { useState, useEffect, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FaUserCircle } from "react-icons/fa";
-import { Link } from 'react-router-dom';
 import OperatorReserve from './operatorReserve';
 import {
   MDBCol,
@@ -16,26 +13,26 @@ import {
   MDBTypography,
 } from 'mdb-react-ui-kit';
 import UserContext from '../UserContext';
-import {auth, db} from "../config/firebase"
+import { auth, db } from "../config/firebase";
 import { updateDoc, doc, getDoc } from 'firebase/firestore';
 import { storage } from "../config/firebase";
-import {ref, uploadBytes, getDownloadURL, listAll, list  } from "firebase/storage"
-import {v4} from "uuid"; 
+import { ref, uploadBytes, getDownloadURL, listAll } from "firebase/storage";
+import { v4 } from "uuid";
 
 export default function EditButton() {
   const [isEditing, setIsEditing] = useState(false);
   const location = useLocation();
   const { user } = useContext(UserContext);
-  const [name, setName] = useState(user.firstName || ""); 
-  const [lastName, setLastName] = useState(user.lastName || ""); 
+  const [name, setName] = useState(user.firstName || "");
+  const [lastName, setLastName] = useState(user.lastName || "");
   const fullName = `${name} ${lastName}`;
-  const [address, setAddress] = useState(user.address || ""); 
-  const [email, setEmail] = useState(user.email || ""); 
-  const [contactNumber, setContactNumber] = useState(user.phoneNumber || ""); 
-  const [companyName, setCompanyName] = useState(user.managementName || ""); 
-  const [companyAddress, setCompanyAddress] = useState(user.companyAddress || ""); 
-  const [companyContact, setCompanyContact] = useState(user.companyContact || ""); 
-  const [companyEmail, setCompanyEmail] = useState(user.companyEmail || ""); 
+  const [address, setAddress] = useState(user.address || "");
+  const [email, setEmail] = useState(user.email || "");
+  const [contactNumber, setContactNumber] = useState(user.phoneNumber || "");
+  const [companyName, setCompanyName] = useState(user.managementName || "");
+  const [companyAddress, setCompanyAddress] = useState(user.companyAddress || "");
+  const [companyContact, setCompanyContact] = useState(user.companyContact || "");
+  const [companyEmail, setCompanyEmail] = useState(user.companyEmail || "");
   const [profileImageUrl, setProfileImageUrl] = useState("");
 
   const userDocRef = auth.currentUser ? doc(db, 'agents', auth.currentUser.uid) : null;
@@ -51,7 +48,6 @@ export default function EditButton() {
       });
     }
   };
-
 
   useEffect(() => {
     if (userDocRef) {
@@ -75,13 +71,13 @@ export default function EditButton() {
       const imageRef = ref(storage, `images/${imageUpload.name + v4()}`);
       uploadBytes(imageRef, imageUpload).then((snapshot) => {
         getDownloadURL(snapshot.ref).then((url) => {
-          setProfileImageUrl(url); 
-          saveProfileImageUrl(url); 
+          setProfileImageUrl(url);
+          saveProfileImageUrl(url);
         });
       });
     }
   };
-  
+
   useEffect(() => {
     listAll(imagesListRef).then((response) => {
       response.items.forEach((item) => {
@@ -95,7 +91,6 @@ export default function EditButton() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-
         if (auth.currentUser) {
           const userId = auth.currentUser.uid;
 
@@ -103,7 +98,7 @@ export default function EditButton() {
 
           if (doc.exists) {
             const userData = doc.data();
-            
+
             setName(userData.name || "");
             setAddress(userData.address || "");
             setEmail(userData.email || "");
@@ -122,19 +117,19 @@ export default function EditButton() {
     };
 
     fetchUserData();
-  }, []); 
+  }, []);
 
   const updateUserData = async () => {
     try {
       if (auth.currentUser) {
         const userId = auth.currentUser.uid;
-        const userDocRef = doc(db, 'agents', userId); 
+        const userDocRef = doc(db, 'agents', userId);
 
         const updatedData = {
-          firstName:name,
+          firstName: name,
           address: address,
           email: email,
-          phoneNumber:contactNumber,
+          phoneNumber: contactNumber,
         };
 
         await updateDoc(userDocRef, updatedData);
@@ -146,7 +141,7 @@ export default function EditButton() {
     } catch (error) {
       console.error("Error updating user data: ", error);
     }
-};
+  };
 
   const toggleEditing = () => {
     setIsEditing(!isEditing);
@@ -157,136 +152,102 @@ export default function EditButton() {
   };
 
   const handleSaveProfile = () => {
-    console.log(auth.currentUser);
     setIsEditing(false);
     updateUserData();
-};
-
-  const styles = {
-    welcomeMessage: {
-      position: "absolute",
-      top: "10px",
-      right: "10px",
-      margin: "0",
-      color: "#fff",
-      fontFamily: "Rockwell, sans-serif",
-      textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)",
-    },
-    icon: {
-      marginRight: "5px",
-    },
   };
 
   return (
     <div className="gradient-custom-2" style={{ backgroundColor: 'white' }}>
       <nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: "#132B4B" }}>
         <div className="container">
-          <a className="navbar-brand" style={{padding: 20}}>
+          <a className="navbar-brand" style={{ padding: 20 }}>
+            {/* Your brand/logo here */}
           </a>
         </div>
       </nav>
       <MDBContainer className="py-4">
-  <MDBRow>
-    <MDBCol lg="4">
-      <OperatorReserve />
-    </MDBCol>
-    <MDBCol lg="6">
-      <h3 style={{ marginTop: "30px" }}> Operator's Information</h3>
-      <MDBContainer className="py-1 h-5">
-        <MDBRow className="justify-content-center align-items-center h-100">
-        <MDBCard style={{ border: "none", boxShadow: "none",backgroundColor: "#f9f9f9"}}>
-          <div className="rounded-top text-white d-flex flex-row" style={{ backgroundColor: '#f9f9f9', height: '200px' }}>
-  <div className="ms-4 mt-5 d-flex flex-column" style={{ width: '150px', textAlign: "center" }}>
-    <MDBCardImage
-      src={profileImageUrl || "default_placeholder.jpg"}
-      alt="Profile"
-      className="mt-4 mb-2 img-thumbnail"
-      fluid style={{ width: '150px', zIndex: '1' }}
-    />
-    {isEditing && (
-      <>
-        <input
-          type="file"
-          onChange={(event) => {
-            setImageUpload(event.target.files[0]);
-          }}
-        />
-        <button onClick={uploadFile}> Upload Image</button>
-      </>
-    )}
-  </div>
-  <div className="ms-3 d-flex flex-column" style={{ marginTop: '30px', fontFamily: 'Georgina', color: "black" }}>
-    {isEditing ? (
-      <>
-        <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} style={{ marginBottom: '5px' }} />
-        <input type="text" placeholder="Location" value={address} onChange={(e) => setAddress(e.target.value)} style={{ marginBottom: '5px' }} />
-        <input type="text" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={{ marginBottom: '5px' }} />
-        <input type="text" placeholder="Contact Number" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} style={{ marginBottom: '5px' }} />
-      </>
-    ) : (
-      <>
-
-      </>
-    )}
-  </div>
-</div>
-<div className="p-4 text-black" style={{ backgroundColor: '#f9f9f9', fontFamily: 'Georgina' }}>
-  <MDBBtn outline color="dark" style={{ height: '36px', overflow: 'visible'}} onClick={isEditing ? handleSaveProfile : toggleEditing}>
-    <img src="edit.jpg" alt="Edit" style={{ width: '20px', marginRight: '10px' }} />
-    {isEditing ? 'Save Changes' : 'Edit Profile'}
-  </MDBBtn>
-</div>
-
-<MDBCardBody className="text-black p-4" style={{ fontFamily:'Georgina' }}>
-  <div className="mb-5">
-    {isEditing ? (
-      <div className="p-4" style={{ backgroundColor: '#f9f9f9' }}>
-        <h4>Company's Information</h4>
-        <input type="text" readOnly placeholder="Name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} style={{ marginRight:'5px', marginBottom:'5px'}}/>
-        <input type="text" readOnly placeholder="Location" value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} style={{ marginRight:'5px'}}/>
-        <input type="text" readOnly placeholder="Contact Number" value={companyContact} onChange={(e) => setCompanyContact(e.target.value)} style={{ marginRight:'5px'}}/>
-      </div>
-    ) : (
-      <div className="p-4" style={{ backgroundColor: '#f9f9f9', fontFamily:'Georgina' }}>
-        <MDBCardText className="font-italic mb-1" style={{textAlign:'center', fontWeight:'bold'}}>INFORMATION</MDBCardText>
-        <MDBCardText className="font-italic mb-1">
-          <img src="opname.jpg" alt="Operator User Logo" style={{ width: '20px', marginRight: '10px'}} />{name}
-        </MDBCardText>
-        <MDBCardText className="font-italic mb-1">
-          <img src="opa.png" alt="Operator Address Logo" style={{ width: '20px', marginRight: '10px'}} />{address}
-        </MDBCardText>
-        <MDBCardText className="font-italic mb-1">
-          <img src="ope.jpg" alt="Operator Email Logo" style={{ width: '20px', marginRight: '10px'}} />{email}
-        </MDBCardText>
-        <MDBCardText className="font-italic mb-0">
-          <img src="opcontact.png" alt="Operator Contact Logo" style={{ width: '20px', marginRight: '10px'}} />{contactNumber}
-        </MDBCardText>
-      </div>
-    )}
-  </div>
-  
-  
-  <div className="p-4" style={{ backgroundColor: '#f9f9f9', fontFamily:'Georgina' }}>
-    <MDBCardText className="font-italic mb-1" style={{textAlign:'center', fontWeight:'bold'}}>CURRENTLY WORKS AT</MDBCardText>
-    <MDBCardText className="font-italic mb-1">
-      <img src="esLogo.png" alt="Operator User Logo" style={{ width: '20px', marginRight: '10px'}} />{companyName}
-    </MDBCardText>
-    <MDBCardText className="font-italic mb-1">
-      <img src="esA.png" alt="Operator Address Logo" style={{ width: '20px', marginRight: '10px'}} />{companyAddress}
-    </MDBCardText>
-    <MDBCardText className="font-italic mb-0">
-      <img src="opcontact.png" alt="Operator Contact Logo" style={{ width: '20px', marginRight: '10px'}} />{companyContact}
-    </MDBCardText>
-  </div>
-</MDBCardBody>
+        <MDBRow>
+          <MDBCol lg="4">
+            <OperatorReserve />
+          </MDBCol>
+          <MDBCol lg="8">
+            <MDBCard className="mb-4">
+              <div className="p-4 text-center">
+                <MDBCardImage
+                  src={profileImageUrl || "default_placeholder.jpg"}
+                  alt="Profile"
+                  className="img-fluid rounded-circle mb-4"
+                  style={{ width: '150px', height: '150px', objectFit: 'cover', border: '4px solid #132B4B' }}
+                />
+                {isEditing && (
+                  <>
+                    <input
+                      type="file"
+                      onChange={(event) => {
+                        setImageUpload(event.target.files[0]);
+                      }}
+                      className="form-control mb-3"
+                    />
+                    <MDBBtn onClick={uploadFile}>Upload Image</MDBBtn>
+                  </>
+                )}
+              </div>
+              <MDBCardBody className="text-center">
+                {isEditing ? (
+                  <div className="mb-4">
+                    <input type="text" className="form-control mb-3" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+                    <input type="text" className="form-control mb-3" placeholder="Location" value={address} onChange={(e) => setAddress(e.target.value)} />
+                    <input type="text" className="form-control mb-3" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <input type="text" className="form-control mb-3" placeholder="Contact Number" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} />
+                  </div>
+                ) : (
+                    <div className="p-4">
+                        <MDBTypography tag='h5'>{fullName}</MDBTypography>
+                    <MDBCardText className="text-muted">{address}</MDBCardText>
+                    <MDBCardText className="text-muted">{email}</MDBCardText>
+                    <MDBCardText className="text-muted">{contactNumber}</MDBCardText>
+                  </div>
+                )}
+                <MDBBtn
+                onClick={isEditing ? handleSaveProfile : toggleEditing}
+                className={`btn ${isEditing ? 'btn-success' : 'btn-primary'}`}
+                style={{ borderRadius: '20px', padding: '10px 20px', minWidth: '150px' }}
+              >
+                {isEditing ? 'Save Changes' : 'Edit Profile'}
+              </MDBBtn>
+              </MDBCardBody>
             </MDBCard>
-           </MDBRow>
-                                      
-                </MDBContainer>
-                </MDBCol>
-
+            <MDBCard className="mb-4">
+              <MDBCardBody className="p-4">
+                <h4 className="mb-4">Company's Information</h4>
+                {isEditing ? (
+                  <div className="mb-4">
+                    <input type="text" className="form-control mb-3" placeholder="Name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+                    <input type="text" className="form-control mb-3" placeholder="Location" value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} />
+                    <input type="text" className="form-control mb-3" placeholder="Contact Number" value={companyContact} onChange={(e) => setCompanyContact(e.target.value)} />
+                  </div>
+                ) : (
+                  <div className="mb-4">
+                    <MDBCardText className="font-italic mb-1">{companyName}</MDBCardText>
+                    <MDBCardText className="font-italic mb-1">{companyAddress}</MDBCardText>
+                    <MDBCardText className="font-italic mb-1">{companyEmail}</MDBCardText>
+                    <MDBCardText className="font-italic mb-0">{companyContact}</MDBCardText>
+                  </div>
+                )}
+              </MDBCardBody>
+            </MDBCard>
+            <MDBCard className="mb-4">
+              <MDBCardBody className="p-4">
+                <h4 className="mb-4">Currently Works At</h4>
+                <div className="mb-4">
+                  <MDBCardText className="font-italic mb-1">{companyName}</MDBCardText>
+                  <MDBCardText className="font-italic mb-1">{companyAddress}</MDBCardText>
+                  <MDBCardText className="font-italic mb-0">{companyContact}</MDBCardText>
+                </div>
+              </MDBCardBody>
+            </MDBCard>
+          </MDBCol>
         </MDBRow>
-
       </MDBContainer>
     </div>
   );

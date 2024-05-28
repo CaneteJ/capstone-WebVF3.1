@@ -31,6 +31,9 @@ import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import MapComponent from "../components/Map";
 
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+
 const Reservation = () => {
 
     const { user } = useContext(UserContext);
@@ -50,7 +53,18 @@ const Reservation = () => {
     const [parkingSeeker, setParkingSeeker] = useState([]);
     const [summaryCardsData, setSummaryCardsData] = useState([]);
     const [agent, setAgent] = useState([]);    
+    const [showAccepted, setShowAccepted] = useState(false);
+    const [showDeclined, setShowDeclined] = useState(false);
+    const [startDate, setStartDate] = useState(null);
+    const [endDate, setEndDate] = useState(null);
 
+    const filterByDate = (logEntry) => {
+      if (startDate && endDate) {
+          const reservationDate = new Date(logEntry.date);
+          return reservationDate >= startDate && reservationDate <= endDate;
+      }
+      return true;
+  };
   
     useEffect(() => {
         const unsubscribe = onSnapshot(collection(db, 'notifications'), (snapshot) => {
@@ -108,7 +122,7 @@ const Reservation = () => {
             carPlateNumber: userData?.carPlateNumber || "N/A",
             slot: typeof slotId === "string" ? slotId.slice(1) : "N/A",
             slotId: slotId,
-                    floorTitle,
+            floorTitle,
             timeOfRequest: new Date(
               reservationDoc.data().timestamp.seconds * 1000
             ).toLocaleTimeString("en-US", {
@@ -116,6 +130,7 @@ const Reservation = () => {
               hour: "numeric",
               minute: "numeric",
             }),
+            date: new Date(reservationDoc.data().timestamp.seconds * 1000).toLocaleDateString("en-US"),
           };
         }
       );
@@ -174,6 +189,7 @@ const Reservation = () => {
             slotId,
             timeOfRequest,
             email: userEmail || 'N/A', // Ensure email is not undefined
+            date: new Date().toLocaleDateString("en-US"),
         };
     
         setHistoryLog([logEntry, ...historyLog]);
@@ -294,52 +310,77 @@ const Reservation = () => {
                   alignItems: "center", 
                   
                 }}>
-                 <div>
-                    <button
-                        className="btn btn-primary"
-                        style={{ margin: "5px", width: "150px"}}
-                        onClick={() => setShowAccepted(!showAccepted)}
-                    >
-                        {showAccepted ? "Hide Accepted" : "Show Accepted"}
-                    </button>
-                    <button
-                        className="btn btn-primary"
-                        style={{ margin: "5px", width: "150px" }}
-                        onClick={() => setShowDeclined(!showDeclined)}
-                    >
-                        {showDeclined ? "Hide Declined" : "Show Declined"}
-                    </button>
-                    <button
-                        className="btn btn-danger"
-                        style={{ margin: "5px", width: "150px" }}
-                        onClick={handleClearHistory}
-                    >
-                        Clear History
-                    </button>
-                </div>
-                <hr className="divider" />
-                </div>
-                {showAccepted && (
-                    <div>
-                        <h6 className="mt-3">Accepted Reservations</h6>
-                        {historyLog.map((logEntry, index) => logEntry.status === "Accepted" && (
-                            <div className="alert alert-success mt-2" key={index}>
-                                <strong>Accepted:</strong> {logEntry.name} requested a reservation on {logEntry.slotId}. Plate Number: {logEntry.plateNumber}, Slot: {logEntry.slotId}
-                            </div>
-                        ))}
-                    </div>
-                )}
-                {showDeclined && (
-                    <div>
-                        <h6 className="mt-3">Declined Reservations</h6>
-                        {historyLog.map((logEntry, index) => logEntry.status === "Declined" && (
-                            <div className="alert alert-danger mt-2" key={index}>
-                                <strong>Declined:</strong> {logEntry.name} requested a reservation on {logEntry.slotId}. Plate Number: {logEntry.plateNumber}, Slot: {logEntry.slotId}
-                            </div>
-                        ))}
-                    </div>
-                )}
+                            <div>
+                <button
+                    className="btn btn-primary"
+                    style={{ margin: "5px", width: "150px" }}
+                    onClick={() => setShowAccepted(!showAccepted)}
+                >
+                    {showAccepted ? "Hide Accepted" : "Show Accepted"}
+                </button>
+                <button
+                    className="btn btn-primary"
+                    style={{ margin: "5px", width: "150px" }}
+                    onClick={() => setShowDeclined(!showDeclined)}
+                >
+                    {showDeclined ? "Hide Declined" : "Show Declined"}
+                </button>
+                <button
+                    className="btn btn-danger"
+                    style={{ margin: "5px", width: "150px" }}
+                    onClick={handleClearHistory}
+                >
+                    Clear History
+                </button>
             </div>
+            <hr className="divider" />
+
+            <div>
+                <h6 className="mt-3">Filter by Date</h6>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                    <div>
+                        <label>Start Date: </label>
+                        <DatePicker
+                            selected={startDate}
+                            onChange={date => setStartDate(date)}
+                            dateFormat="yyyy/MM/dd"
+                            isClearable
+                        />
+                    </div>
+                    <div>
+                        <label>End Date: </label>
+                        <DatePicker
+                            selected={endDate}
+                            onChange={date => setEndDate(date)}
+                            dateFormat="yyyy/MM/dd"
+                            isClearable
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {showAccepted && (
+                <div>
+                    <h6 className="mt-3">Accepted Reservations</h6>
+                    {historyLog.filter(logEntry => logEntry.status === "Accepted" && filterByDate(logEntry)).map((logEntry, index) => (
+                        <div className="alert alert-success mt-2" key={index}>
+                            <strong>Accepted:</strong> {logEntry.name} requested a reservation on {logEntry.slotId}. Plate Number: {logEntry.plateNumber}, Slot: {logEntry.slotId}
+                        </div>
+                    ))}
+                </div>
+            )}
+            {showDeclined && (
+                <div>
+                    <h6 className="mt-3">Declined Reservations</h6>
+                    {historyLog.filter(logEntry => logEntry.status === "Declined" && filterByDate(logEntry)).map((logEntry, index) => (
+                        <div className="alert alert-danger mt-2" key={index}>
+                            <strong>Declined:</strong> {logEntry.name} requested a reservation on {logEntry.slotId}. Plate Number: {logEntry.plateNumber}, Slot: {logEntry.slotId}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+        </div>
           
             
         );
@@ -514,7 +555,6 @@ const Reservation = () => {
                 <nav
                   style={{
                     backgroundColor: "white",
-                    marginRight: "-50%",
                     marginLeft: "auto",
                     borderWidth: 1,
                     borderColor: "#003851",
