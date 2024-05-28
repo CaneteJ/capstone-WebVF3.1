@@ -246,9 +246,6 @@ function CreateAccount() {
                     </label>
                   </div>
                   <div className="form-footer">
-                    <label>
-                      <input type="checkbox" required /> I accept the <a href="#">Privacy Policy</a> and the <a href="#">Terms & Conditions</a>
-                    </label>
                     <button type="submit">Register</button>
                   </div>
                 </form>
