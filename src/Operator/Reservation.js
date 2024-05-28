@@ -207,6 +207,7 @@ const Reservation = () => {
                     from: "Reservation",
                     status: "Occupied",
                     timestamp: new Date(),
+                    reserveStatus: 'Accepted',
                 }, { merge: true });
     
                 const reservationDocRef = doc(db, "reservations", id);
