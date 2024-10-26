@@ -8,6 +8,7 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import UserContext from '../UserContext';
 import AddVehicleForm from './AddVehicleForm';
+import { loginUser } from "../components/auth"; 
 
 function DashboardOp() {
     const [pendingAccounts, setPendingAccounts] = useState([]);
@@ -29,6 +30,7 @@ function DashboardOp() {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedFloor, setSelectedFloor] = useState('');
     const [selectedFloorSlots, setSelectedFloorSlots] = useState([]);
+    const [token, setToken] = useState('');
 
     const saveSlotsToLocalStorage = (slots) => {
         localStorage.setItem('slots', JSON.stringify(slots));
@@ -353,6 +355,7 @@ function DashboardOp() {
             </div>
         );
     };
+
     
     
     const searchInFirebase = async (searchInput) => {
@@ -401,6 +404,7 @@ function DashboardOp() {
         setActiveCard(activeCard === cardType ? '' : cardType);
     };
 
+    
     const renderFormBasedOnCardType = () => {
         let data = [];
         let headers = [];

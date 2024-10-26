@@ -93,6 +93,7 @@ useEffect(() => {
   }
 }, [user]);
 
+
 const [notifications, setNotifications] = useState([]);
 const [showNotification, setShowNotification] = useState(false);
 const [notificationCount, setNotificationCount] = useState(0);
@@ -636,83 +637,115 @@ const renderFloorTabs = () => {
   
   const [showExitConfirmation, setShowExitConfirmation] = useState(false);
   const handleExitSlot = async (slotIndex) => {
-    // Check if the slot is already empty
-    if (!slotSets[currentSetIndex].slots[slotIndex].occupied) {
-      setErrorMessage("This slot is already empty.");
-      return;
-    }
-  
-    // Assuming managementName is available in your component
-    const managementDocRef = doc(db, 'slot', managementName);
-    const slotCollectionRef = collection(managementDocRef, 'slotData');
-    const floorTitle = slotSets[currentSetIndex].title || "General Parking";
-    const slotDocRef = doc(slotCollectionRef, `slot_${floorTitle}_${slotIndex}`);
+  // Check if the slot is already empty
+  if (!slotSets[currentSetIndex].slots[slotIndex].occupied) {
+    setErrorMessage("This slot is already empty.");
+    return;
+  }
 
-    try {
-      // Delete the slot document from Firestore
-      await deleteDoc(slotDocRef);
-      console.log(`Slot ${slotIndex} data deleted from Firebase under ${managementName}`);
-    } catch (error) {
-      console.error('Error deleting slot data from Firebase:', error);
-      setErrorMessage('Error processing slot exit. Please try again.');
+  // Assuming managementName is available in your component
+  const managementDocRef = doc(db, 'slot', managementName);
+  const slotCollectionRef = collection(managementDocRef, 'slotData');
+  const floorTitle = slotSets[currentSetIndex].title || "General Parking";
+  const slotDocRef = doc(slotCollectionRef, `slot_${floorTitle}_${slotIndex}`);
+  const userDetails = slotSets[currentSetIndex].slots[slotIndex].userDetails;
+
+  console.log("User Details at exit:", userDetails);
+
+  if (!userDetails.email) {
+    const userRef = collection(db, 'user');
+    const q = query(userRef, where('email', '==',userDetails.userEmail));
+    const userSnap = await getDocs(q);
+    if (!userSnap.empty) {
+      userDetails.email = userSnap.docs[0].data().email;
+    } else {
+      console.error('User not found in users collection');
       return;
     }
-  
-    // Update local state to reflect the slot is now empty
-    const updatedSets = slotSets.map((set, idx) => {
-      if (idx === currentSetIndex) {
-        return {
-          ...set,
-          slots: set.slots.map((slot, i) => {
-            if (i === slotIndex) {
-              return {
-                ...slot,
-                occupied: false,
-                userDetails: null
-              };
-            }
-            return slot;
-          })
-        };
-      }
-      return set;
-    });
-  
-    // Update the count of available spaces
-    setZoneAvailableSpaces((prevSpaces) => {
-      const updatedSpaces = [...prevSpaces];
-      updatedSpaces[currentSetIndex]++;
-      return updatedSpaces;
-    });
-  
-    // If there are userDetails, log the exit
-    const userDetails = updatedSets[currentSetIndex].slots[slotIndex].userDetails;
-    if (userDetails && userDetails.carPlateNumber) {
-      const logData = {
-        carPlateNumber: userDetails.carPlateNumber,
-        timeOut: new Date(),
-        paymentStatus: 'Paid',
-      };
-  
-      try {
-        const logsCollectionRef = collection(db, 'logs', managementName, 'floors' );
-        const q = query(logsCollectionRef, where('carPlateNumber', '==', userDetails.carPlateNumber));
-        const querySnapshot = await getDocs(q);
-  
-        querySnapshot.forEach(async (doc) => {
-          const docRef = doc.ref;
-          await setDoc(docRef, logData, { merge: true });
-        });
-      } catch (error) {
-        console.error('Error updating logs: ', error);
-      }
+  }
+  try {
+    await deleteDoc(slotDocRef);
+    console.log(`Slot ${slotIndex} data deleted from Firebase under ${managementName}`);
+    if (userDetails) {
+      await sendExitNotification(userDetails, floorTitle, slotIndex);
     }
-  
-    // Clear any error message and close the confirmation dialog if it's open
-    setErrorMessage('');
-    setShowExitConfirmation(true);
-  };
-  
+  } catch (error) {
+    console.error('Error deleting slot data from Firebase:', error);
+    setErrorMessage('Error processing slot exit. Please try again.');
+  }
+
+  updateSets(slotIndex);
+};
+
+const sendExitNotification = async (userDetails, floorTitle, slotIndex) => {
+  const userTokenDocRef = doc(db, "userTokens", userDetails.email);
+  const docSnap = await getDoc(userTokenDocRef);
+
+  if (docSnap.exists()) {
+    const { token } = docSnap.data();
+    const notificationData = {
+      appId: 24190, 
+      appToken: '7xmUkgEHBQtdSvSHDbZ9zd', 
+      title: 'Parking Slot Exited',
+      message: `You have exited your parking slot on ${floorTitle} floor at slot number ${slotIndex + 1}. Thank you for visiting!`,
+      targetUsers: [token], 
+      subID: userDetails.email 
+    };
+
+    console.log("Sending exit notification with data:", JSON.stringify(notificationData));
+    fetch('https://app.nativenotify.com/api/indie/notification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${notificationData.appToken}`
+      },
+      body: JSON.stringify(notificationData)
+    })
+    .then(response => response.text())
+    .then(text => {
+      console.log('Exit notification sent successfully:', text);
+    })
+    .catch(error => {
+      console.error('Error sending exit notification:', error);
+    });
+  } else {
+    console.error("No device token found for userEmail:", userDetails.email);
+  }
+};
+
+const updateSets = (slotIndex) => {
+  // Update local state to reflect the slot is now empty
+  const updatedSets = slotSets.map((set, idx) => {
+    if (idx === currentSetIndex) {
+      return {
+        ...set,
+        slots: set.slots.map((slot, i) => {
+          if (i === slotIndex) {
+            return {
+              ...slot,
+              occupied: false,
+              userDetails: null
+            };
+          }
+          return slot;
+        })
+      };
+    }
+    return set;
+  });
+  setSlotSets(updatedSets);
+
+  // Update the count of available spaces
+  setZoneAvailableSpaces((prevSpaces) => {
+    const updatedSpaces = [...prevSpaces];
+    updatedSpaces[currentSetIndex]++;
+    return updatedSpaces;
+  });
+
+  // Clear any error message and close the confirmation dialog if it's open
+  setErrorMessage('');
+  setShowExitConfirmation(true);
+};
   
   const handleConfirmExit = () => {
     setShowExitConfirmation(false);

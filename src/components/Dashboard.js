@@ -10,6 +10,7 @@ import { faEye, faChartColumn, faAddressCard, faPlus, faCar, faUser, faCoins, fa
 import UserContext from "../UserContext";
 import { auth, db } from "../config/firebase";
 import { getDocs, collection, query, where, doc, getDoc } from "firebase/firestore";
+import { logoutUser } from "./auth";
 
 import "./sideNavigation.css"
 
@@ -25,7 +26,7 @@ const Establishment = () => {
     const [occupiedSpaces, setOccupiedSpaces] = useState(0);
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useContext(UserContext);
+    const { user, setUser } = useContext(UserContext);
     const [parkingLogs, setParkingLogs] = useState([]);
     const [managementName, setManagementName] = useState(user.managementName || "");
     const [address, setAddress] = useState(user.companyAddress || "");
@@ -243,6 +244,17 @@ const Establishment = () => {
         setActiveCard(activeCard === cardType ? '' : cardType);
     };
 
+    const handleLogOut = async () => {
+        try {
+          await logoutUser();
+          // Perform any additional cleanup or state updates
+          setUser(null);  // Assuming setUser updates the user state context
+          navigate('/');  // Redirect to the login page or any other appropriate route
+        } catch (error) {
+          console.error('Failed to log out:', error);
+        }
+      };
+
     const renderFormBasedOnCardType = () => {
         switch (activeCard) {
             case 'occupied':
@@ -333,7 +345,7 @@ const Establishment = () => {
                                 <li><a href='Tracks'><i className="fas fa-project-diagram"></i>Management Details</a></li>
                                 <li><a href="Profiles"><i className="fas fa-blog"></i>Profile</a></li>
                                 <li><a href="Feedback"><i className="fas fa-blog"></i>Feedback</a></li>
-                                <li><a href="/"><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
+                                <li><a onClick={handleLogOut}><i className="fas fa-sign-out-alt" style={{ color: 'red' }}></i>Logout</a></li>
                             </ul>
                         </div>
                     </div>

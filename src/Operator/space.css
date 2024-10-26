@@ -145,3 +145,39 @@
   border-left: none; /* Remove left border to merge visually with label */
   border-radius: 0 5px 5px 0; /* Rounded corners on the right side */
 }
+
+/* Custom styles for the toast container */
+.custom-toast-container {
+  /* Aligns the container to the bottom-right of the screen with some padding */
+  z-index: 9999;
+}
+
+/* Custom styles for individual toast notifications */
+.custom-toast {
+  /* Add some shadow and border radius for a cleaner look */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+/* Custom styles for the body of the toast */
+.custom-body {
+  /* Consistent font and padding */
+  font-family: Arial, sans-serif;
+  padding: 8px 16px;
+  color: #333; /* Dark grey text */
+}
+
+/* Additional styling for the progress bar */
+.Toastify__progress-bar {
+  background: linear-gradient(to right, #4caf50, #8bc34a);
+}
+
+/* Styling for toast appearing animation */
+@keyframes Toastify__trackProgress {
+  0% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0);
+  }
+}

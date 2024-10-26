@@ -191,192 +191,207 @@ const Reservation = () => {
     const data = await response.json();
     return data.sub_id; // assuming the response contains `sub_id`
 };
-    const handleReservation = async (accepted, reservationRequest, index) => {
-        const { id, userName, carPlateNumber, slotId, timeOfRequest, floorTitle, userToken, userEmail } = reservationRequest;
-        const status = accepted ? "Accepted" : "Declined";
-    
-        const logEntry = {
-            status,
-            name: userName,
-            carPlateNumber,
-            slotId,
-            timeOfRequest,
-            email: userEmail || 'N/A', // Ensure email is not undefined
-            date: new Date().toLocaleDateString("en-US"),
-        };
-    
-        setHistoryLog([logEntry, ...historyLog]);
-        localStorage.setItem("historyLog", JSON.stringify([logEntry, ...historyLog]));
-    
-        if (accepted) {
-            try {
-                console.log(`Floor Title: ${floorTitle}, Slot ID: ${slotId}`); 
-                const slotDocRef = doc(db, "slot", user.managementName, "slotData", `slot_${floorTitle}_${slotId}`);
-    
-                await setDoc(slotDocRef, {
-                    userDetails: {
-                        name: userName,
-                        carPlateNumber,
-                        slotId,
-                        floorTitle,
-                    },
-                    from: "Reservation",
-                    status: "Occupied",
-                    timestamp: new Date(),
-                    reserveStatus: 'Accepted',
-                }, { merge: true });
-    
-                const reservationDocRef = doc(db, "reservations", id);
-                await deleteDoc(reservationDocRef);
-                if (userEmail) {
+const handleReservation = async (accepted, reservationRequest, index) => {
+  const { id, userName, carPlateNumber, slotId, timeOfRequest, floorTitle, userToken, userEmail } = reservationRequest;
+  const status = accepted ? "Accepted" : "Declined";
+
+  const logEntry = {
+      status,
+      name: userName,
+      carPlateNumber,
+      slotId,
+      timeOfRequest,
+      email: userEmail || 'N/A', // Ensure email is not undefined
+      date: new Date().toLocaleDateString("en-US"),
+  };
+
+  setHistoryLog([logEntry, ...historyLog]);
+  localStorage.setItem("historyLog", JSON.stringify([logEntry, ...historyLog]));
+
+  if (accepted) {
+      try {
+          console.log(`Floor Title: ${floorTitle}, Slot ID: ${slotId}`);
+          const slotDocRef = doc(db, "slot", user.managementName, "slotData", `slot_${floorTitle}_${slotId}`);
+
+          await setDoc(slotDocRef, {
+              userDetails: {
+                  name: userName,
+                  carPlateNumber,
+                  slotId,
+                  floorTitle,
+                  userEmail,
+              },
+              from: "Reservation",
+              status: "Occupied",
+              timestamp: new Date(),
+              reserveStatus: 'Accepted',
+          }, { merge: true });
+
+          const reservationDocRef = doc(db, "reservations", id);
+          await deleteDoc(reservationDocRef);
+
+          // Fetch the user token from Firestore
+          if (userEmail) {
+              const userTokenDocRef = doc(db, "userTokens", userEmail);
+              const docSnap = await getDoc(userTokenDocRef);
+              if (docSnap.exists()) {
+                  const { token } = docSnap.data();
                   const notificationData = {
-                      appId: 21460,
-                      appToken: 'rLQ1cRoXNKwLkZE4aWOyKw',
+                      appId: 24190,
+                      appToken: '7xmUkgEHBQtdSvSHDbZ9zd',
                       title: 'Reservation',
                       message: `Your reservation at ${user.managementName} on ${floorTitle} ${slotId + 1} is accepted`,
-                      targetUsers: [userEmail] , // This will now only include valid email addresses
+                      targetUsers: [token], // Send to device token
                       subID: userEmail,
                       color: '#FF0000FF'
                   };
-              
+
                   console.log("Sending notification with data:", JSON.stringify(notificationData));
-              
                   fetch('https://app.nativenotify.com/api/indie/notification', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${notificationData.appToken}`
-                    },
-                    body: JSON.stringify(notificationData)
-                })
-                .then(response => response.text()) // Get the response as text
-                .then(text => {
-                    if (text === "Success!") {
-                        console.log('Notification sent successfully:', text);
-                        alert('Notification sent successfully.');
-                    } else {
-                        try {
-                            // Attempt to parse as JSON if the response isn't the plain "Success!"
-                            const data = JSON.parse(text);
-                            console.log('Notification sent:', data);
-                            alert('Notification sent successfully.');
-                        } catch (error) {
-                            console.error('Response received but not in expected format:', text);
-                            alert(`Received unexpected response format. Response was: ${text}`);
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error sending notification:', error);
-                    alert('Failed to send notification. Check the console for more details.');
-                });
-
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${notificationData.appToken}`
+                      },
+                      body: JSON.stringify(notificationData)
+                  })
+                  .then(response => response.text())
+                  .then(text => {
+                      if (text === "Success!") {
+                          console.log('Notification sent successfully:', text);
+                          alert('Notification sent successfully.');
+                      } else {
+                          try {
+                              const data = JSON.parse(text);
+                              console.log('Notification sent:', data);
+                              alert('Notification sent successfully.');
+                          } catch (error) {
+                              console.error('Response received but not in expected format:', text);
+                              alert(`Received unexpected response format. Response was: ${text}`);
+                          }
+                      }
+                  })
+                  .catch(error => {
+                      console.error('Error sending notification:', error);
+                      alert('Failed to send notification. Check the console for more details.');
+                  });
               } else {
-                  console.error("Error: userEmail is null or undefined.");
-                  alert("No valid email to send notification.");
+                  console.error("Error: No device token found for userEmail.");
+                  alert("No device token found for the email.");
               }
-    
-                console.log(`Reservation accepted for slot ${slotId}.`);
-                alert(`Reservation accepted for ${userName} at slot ${slotId + 1}.`);
-    
-                // Add a new document to the resStatus collection
-                const resStatusDocRef = doc(collection(db, "resStatus"));
-                await setDoc(resStatusDocRef, {
-                    userName,
-                    userEmail: userEmail || 'N/A', // Ensure email is not undefined
-                    carPlateNumber,
-                    slotId,
-                    floorTitle,
-                    status: "Occupied",
-                    timestamp: new Date(),
-                    resStatus: "Accepted",
-                    managementName: user.managementName,
-                }, { merge: true });
-              
-            } catch (error) {
-                console.error("Error accepting reservation and updating slotData:", error);
-                alert("Failed to accept the reservation. Please try again.");
-            }
-        } else {
-            try {
-                const reservationDocRef = doc(db, "reservations", id);
-                await setDoc(reservationDocRef, { status: "Declined" }, { merge: true });
+          } else {
+              console.error("Error: userEmail is null or undefined.");
+              alert("No valid email to send notification.");
+          }
+          console.log(`Reservation accepted for slot ${slotId}.`);
+          alert(`Reservation accepted for ${userName} at slot ${slotId + 1}.`);
 
-                console.log(`Reservation declined for ${userName}.`);
-                alert(`Reservation declined for ${userName}.`);
-              
-                const resStatusDocRef = doc(collection(db, "resStatus"));
-                await setDoc(resStatusDocRef, {
-                    userName,
-                    userEmail: userEmail || 'N/A', // Ensure email is not undefined
-                    carPlateNumber,
-                    slotId,
-                    floorTitle,
-                    status: "Occupied",
-                    timestamp: new Date(),
-                    resStatus: "Declined",
-                    managementName: user.managementName,
-                });
-                await deleteDoc(reservationDocRef);
-                if (userEmail) {
+          // Add a new document to the resStatus collection
+          const resStatusDocRef = doc(collection(db, "resStatus"));
+          await setDoc(resStatusDocRef, {
+              userName,
+              userEmail: userEmail || 'N/A', // Ensure email is not undefined
+              carPlateNumber,
+              slotId,
+              floorTitle,
+              status: "Occupied",
+              timestamp: new Date(),
+              resStatus: "Accepted",
+              managementName: user.managementName,
+          }, { merge: true });
+
+      } catch (error) {
+          console.error("Error accepting reservation and updating slotData:", error);
+          alert("Failed to accept the reservation. Please try again.");
+      }
+  } else {
+      try {
+          const reservationDocRef = doc(db, "reservations", id);
+          await setDoc(reservationDocRef, { status: "Declined" }, { merge: true });
+
+          console.log(`Reservation declined for ${userName}.`);
+          alert(`Reservation declined for ${userName}.`);
+
+          const resStatusDocRef = doc(collection(db, "resStatus"));
+          await setDoc(resStatusDocRef, {
+              userName,
+              userEmail: userEmail || 'N/A', // Ensure email is not undefined
+              carPlateNumber,
+              slotId,
+              floorTitle,
+              status: "Occupied",
+              timestamp: new Date(),
+              resStatus: "Declined",
+              managementName: user.managementName,
+          });
+          await deleteDoc(reservationDocRef);
+          
+          // Fetch the user token from Firestore for declined case
+          if (userEmail) {
+              const userTokenDocRef = doc(db, "userTokens", userEmail);
+              const docSnap = await getDoc(userTokenDocRef);
+              if (docSnap.exists()) {
+                  const { token } = docSnap.data();
                   const notificationData = {
-                      appId: 21460,
-                      appToken: 'rLQ1cRoXNKwLkZE4aWOyKw',
+                      appId: 24190,
+                      appToken: '7xmUkgEHBQtdSvSHDbZ9zd',
                       title: 'Reservation',
                       message: `Your reservation at ${user.managementName} on ${floorTitle} ${slotId + 1} was declined`,
-                      targetUsers: [userEmail] , // This will now only include valid email addresses
+                      targetUsers: [token], // Send to device token
                       subID: userEmail
                   };
-              
-                  console.log("Sending notification with data:", JSON.stringify(notificationData));
-              
-                  fetch('https://app.nativenotify.com/api/indie/notification', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${notificationData.appToken}`
-                    },
-                    body: JSON.stringify(notificationData)
-                })
-                .then(response => response.text()) // Get the response as text
-                .then(text => {
-                    if (text === "Success!") {
-                        console.log('Notification sent successfully:', text);
-                        alert('Notification sent successfully.');
-                    } else {
-                        try {
-                            // Attempt to parse as JSON if the response isn't the plain "Success!"
-                            const data = JSON.parse(text);
-                            console.log('Notification sent:', data);
-                            alert('Notification sent successfully.');
-                        } catch (error) {
-                            console.error('Response received but not in expected format:', text);
-                            alert(`Received unexpected response format. Response was: ${text}`);
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error sending notification:', error);
-                    alert('Failed to send notification. Check the console for more details.');
-                });
 
+                  console.log("Sending notification with data:", JSON.stringify(notificationData));
+                  fetch('https://app.nativenotify.com/api/indie/notification', {
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${notificationData.appToken}`
+                      },
+                      body: JSON.stringify(notificationData)
+                  })
+                  .then(response => response.text())
+                  .then(text => {
+                      if (text === "Success!") {
+                          console.log('Notification sent successfully:', text);
+                          alert('Notification sent successfully.');
+                      } else {
+                          try {
+                              const data = JSON.parse(text);
+                              console.log('Notification sent:', data);
+                              alert('Notification sent successfully.');
+                          } catch (error) {
+                              console.error('Response received but not in expected format:', text);
+                              alert(`Received unexpected response format. Response was: ${text}`);
+                          }
+                      }
+                  })
+                  .catch(error => {
+                      console.error('Error sending notification:', error);
+                      alert('Failed to send notification. Check the console for more details.');
+                  });
               } else {
-                  console.error("Error: userEmail is null or undefined.");
-                  alert("No valid email to send notification.");
+                  console.error("Error: No device token found for userEmail.");
+                  alert("No device token found for the email.");
               }
-                
-            } catch (error) {
-                console.error("Error updating reservation status:", error);
-                alert("Failed to update the reservation status. Please try again.");
-            }
-        }
-        const updatedRequests = reservationRequests.filter((_, i) => i !== index);
-        setReservationRequests(updatedRequests);
-    
-        if (accepted) {
-            localStorage.setItem("reservationRequests", JSON.stringify(updatedRequests));
-        }
-    };
+          } else {
+              console.error("Error: userEmail is null or undefined.");
+              alert("No valid email to send notification.");
+          }
+          
+      } catch (error) {
+          console.error("Error updating reservation status:", error);
+          alert("Failed to update the reservation status. Please try again.");
+      }
+  }
+  const updatedRequests = reservationRequests.filter((_, i) => i !== index);
+  setReservationRequests(updatedRequests);
+
+  if (accepted) {
+      localStorage.setItem("reservationRequests", JSON.stringify(updatedRequests));
+  }
+};
+
     
     const [showNotification, setShowNotification] = useState(false);
 

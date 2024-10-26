@@ -1,12 +1,13 @@
 import React, { useState, useContext, useEffect } from "react";
 import { db, auth } from "../config/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import UserContext from "../UserContext";
 import { Link } from "react-router-dom";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { loginUser } from "./auth"; 
 
 import { Dropdown } from "bootstrap";
 
@@ -52,33 +53,34 @@ function Login() {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-
+	
 		try {
-			// Check if email in pending
+			// Check if email is in pending
 			const inPending = pendingAccounts.some((user) => user.email === email);
 			if (inPending) {
 				alert("Account still awaiting admin approval!");
 				return;
 			}
-
-			const userCredential = await signInWithEmailAndPassword(auth, email, password);
-			const user = userCredential.user;
-
+	
+			// Attempt to log in and retrieve the token
+			const { user, token } = await loginUser(email, password);
+			console.log("Access Token:", token);  // Token is logged here and can be used as needed
+	
 			if (user) {
-				const agentsRef = query(collection(db, "agents"), where("email", "==", email));
+				const agentsRef = query(collection(db, "agents"), where("email", "==", user.email));
 				const establishmentsRef = query(
 					collection(db, "establishments"),
-					where("email", "==", email)
+					where("email", "==", user.email)
 				);
-
+	
 				const [agentsSnapshot, establishmentsSnapshot] = await Promise.all([
 					getDocs(agentsRef),
 					getDocs(establishmentsRef),
 				]);
-
+	
 				let userData = null;
 				let path = "";
-
+	
 				if (!agentsSnapshot.empty) {
 					userData = agentsSnapshot.docs[0].data();
 					path = "/Home";
@@ -86,9 +88,9 @@ function Login() {
 					userData = establishmentsSnapshot.docs[0].data();
 					path = "/Dashboard";
 				}
-
+	
 				if (userData) {
-					setUser(userData);
+					setUser({...userData, token}); // Set user data along with token in the context
 					navigate(path);
 					alert("Login successful!");
 				} else {
@@ -102,7 +104,6 @@ function Login() {
 			alert("Error logging in: " + error.message);
 		}
 	};
-
 	const containerStyle = {
 		display: "flex",
 		flexDirection: "column",
