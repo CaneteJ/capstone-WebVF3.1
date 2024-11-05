@@ -87,6 +87,7 @@ const Reservation = () => {
         try {
             const querySnapshot = await getDocs(q);
             const reservationPromises = querySnapshot.docs.map(async (reservationDoc) => {
+              console.log("Reservation data:", reservationDoc.data()); 
                 const slotId = reservationDoc.data().slotId;
                 const userEmail = reservationDoc.data().userEmail;
                 const floorTitle = reservationDoc.data().floorTitle; 
@@ -118,6 +119,7 @@ const Reservation = () => {
             id: reservationDoc.id,
             name: reservationDoc.data().name,
             location: reservationDoc.data().currentLocation,
+            imageUri: reservationDoc.data().imageUri,
             userName: userData?.name || "N/A", // Add the userName property
             carPlateNumber: userData?.carPlateNumber || "N/A",
             slot: typeof slotId === "string" ? slotId.slice(1) : "N/A",
@@ -511,10 +513,22 @@ const handleReservation = async (accepted, reservationRequest, index) => {
 
     const ReservationRequest = ({ request, index }) => {
         const [showMapModal, setShowMapModal] = useState(false);
-      
+        const [showImageModal, setShowImageModal] = useState(false);
+        const [imageUrl, setImageUrl] = useState("");
+
         const toggleMapModal = () => {
           setShowMapModal(!showMapModal);
         };
+
+        const toggleImageModal = () => {
+          setShowImageModal(!showImageModal);
+      };
+
+      const openImageModal = () => {
+        console.log("Image URL:", request.imageUri); // Log the URL to check its validity
+        setImageUrl(request.imageUri);
+        toggleImageModal();
+    };
       
         return (
           <div className="reservation-request mb-4 border p-3 rounded bg-light" style={{ maxWidth: '800px' }} key={request.plateNumber}>
@@ -540,6 +554,10 @@ const handleReservation = async (accepted, reservationRequest, index) => {
           <i className="bi bi-geo-alt"></i> View Map
         </Button>
 
+        <Button variant="secondary" onClick={openImageModal}>
+                <i className="bi bi-image"></i> View Proof of Payment
+            </Button>
+
         {/* PARA SA MAP*/}
         <Modal show={showMapModal} onHide={toggleMapModal} centered>
           <Modal.Header closeButton>
@@ -564,6 +582,26 @@ const handleReservation = async (accepted, reservationRequest, index) => {
             </Button>
           </Modal.Footer>
         </Modal>
+
+        {/* Modal for image */}
+        <Modal show={showImageModal} onHide={toggleImageModal} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Proof of Payment</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {imageUrl ? (
+                        <img src={imageUrl} alt="Reservation Image" style={{ width: "100%", height: "auto" }} />
+                    ) : (
+                        <p>Loading image...</p>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={toggleImageModal}>
+                        Close
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
 
         {/* Buttons */}
         <div className="d-flex flex-row align-items-center mt-2">
