@@ -431,12 +431,15 @@ const fetchData = async (managementName) => {
 
     const existingSlotIndex = findPlateNumber(carPlateNumber);
     if (existingSlotIndex !== -1 && existingSlotIndex !== slotIndex) {
-        const confirmExit = window.confirm(`Cannot assign to this slot. This plate number is already assigned to slot ${existingSlotIndex + 1}!`);
-        if (confirmExit) {
-            return;
-        } else {
-            return; 
-        }
+        setErrorMessage(`Car plate number already assigned to slot ${existingSlotIndex + 1} on this floor.`);
+        return;
+    }
+    
+    const slotData = findPlateAcrossFloors(carPlateNumber);
+    if (slotData.found && slotData.floorIndex !== currentSetIndex) {
+        const floorName = slotSets[slotData.floorIndex].title;
+        setErrorMessage(`Car plate number already assigned to floor "${floorName}" in slot ${slotData.slotIndex + 1}.`);
+        return;
     }
     const floorTitle = slotSets[currentSetIndex].title || "General Parking";
     const uniqueElement = new Date().getTime(); // Using timestamp for uniqueness
@@ -498,9 +501,19 @@ const fetchData = async (managementName) => {
   
     setErrorMessage("");
 };
-
 const findPlateNumber = (plateNumber) => {
   return slotSets[currentSetIndex].slots.findIndex(s => s.userDetails && s.userDetails.carPlateNumber === plateNumber);
+};
+const findPlateAcrossFloors = (plateNumber) => {
+  for (let i = 0; i < slotSets.length; i++) {
+    const slots = slotSets[i].slots;
+    for (let j = 0; j < slots.length; j++) {
+      if (slots[j].occupied && slots[j].userDetails && slots[j].userDetails.carPlateNumber === plateNumber) {
+        return { found: true, floorIndex: i, slotIndex: j };
+      }
+    }
+  }
+  return { found: false };
 };
 
 
